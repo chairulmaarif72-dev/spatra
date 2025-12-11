@@ -1,0 +1,780 @@
+ <!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Quiz - Google Sheets</title>
+<style>
+  :root{
+    --bg:#f4f6fb;
+    --card:#fff;
+    --blue:#1e88ff;
+    --green:#2e7d32;
+    --muted:#6b7280;
+    --danger:#d32f2f;
+  }
+  body{font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;background:var(--bg);margin:0;padding:20px; color:#0b1220}
+  .container{max-width:920px;margin:0 auto}
+  .card{background:var(--card);border-radius:12px;box-shadow:0 6px 20px rgba(20,30,60,0.08);padding:18px;}
+  h1{margin:0 0 10px;font-size:20px}
+  .row{display:flex;gap:12px;align-items:center}
+  label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
+  input[type="text"]{width:100%;padding:10px;border-radius:8px;border:1px solid #e6e9ef;box-sizing:border-box}
+  .controls{display:flex;gap:10px;margin-top:10px}
+  button{padding:10px 14px;border-radius:8px;border:0;background:var(--blue);color:white;cursor:pointer;pointer-events:auto!important}
+  button.secondary{background:#e6e9ef;color:#111;pointer-events:auto!important}
+  .meta{display:flex;gap:12px;align-items:center;margin-top:12px}
+  .timer{font-weight:700;color:var(--danger)}
+  .quiz-wrap{display:flex;gap:16px;margin-top:18px}
+  .sidebar{width:140px}
+  .question-panel{flex:1}
+  .qnum-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .qnum{padding:8px;border-radius:8px;text-align:center;background:#f3f5f9;cursor:pointer;border:1px solid transparent}
+  .qnum.active{background:var(--blue);color:white}
+  .qnum.answered{background:var(--green);color:white}
+  .question-card{padding:16px;border-radius:10px;border:1px solid #eef2f8;background:white}
+  .question-text{font-weight:600;margin-bottom:12px}
+  .options{display:flex;flex-direction:column;gap:8px}
+  .opt{padding:10px;border-radius:8px;border:1px solid #e6e9ef;background:#fff;cursor:pointer}
+  .opt:hover{box-shadow:0 6px 18px rgba(16,24,40,0.06)}
+  .opt.selected{border-color:var(--green);background:#ecf9f0}
+  .opt.active{border-color:var(--blue);background:#e8f0ff}
+  .nav-btns{display:flex;gap:8px;margin-top:12px}
+  .answers-box{margin-top:12px;font-family:monospace;background:#f8fafc;padding:10px;border-radius:8px;border:1px dashed #e2e8f0}
+  .small{font-size:13px;color:var(--muted)}
+  .footer{margin-top:14px;text-align:right}
+  .loading{padding:14px;text-align:center;color:var(--muted)}
+  .date-error{background:#fee;border:1px solid #fcc;border-radius:8px;padding:15px;margin-top:15px;color:#c00;display:none;}
+  /* Fix untuk Google Sites */
+  * { user-select: auto !important; -webkit-user-select: auto !important; }
+  button, input, .opt, .qnum { -webkit-tap-highlight-color: rgba(0,0,0,0.1); }
+  @media (max-width:880px){
+    .quiz-wrap{flex-direction:column}
+    .sidebar{width:100%}
+    .qnum-grid{grid-template-columns:repeat(6,1fr)}
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="card">
+    <h1>Remidi PAI BP XII</h1>
+    <p>SMA NEGERI 1 Wiradesa</p>
+    <!-- Pesan Error Tanggal -->
+    <div id="date-error" class="date-error">
+      <strong>⚠️ Quiz Tidak Tersedia</strong>
+      <p id="date-error-message" style="margin:8px 0 0;"></p>
+    </div>
+    <hr><br>
+    <div id="start-screen">
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <div style="flex:1;min-width:220px">
+          <label>Nama Siswa</label>
+          <input id="input-nama" type="text" placeholder="Isi nama" />
+        </div>
+        <div style="width:180px">
+          <label>Kelas</label>
+          <input id="input-kelas" type="text" placeholder="Contoh: xii-2" />
+        </div>
+        <div style="width:160px;align-self:end">
+          <button id="btn-start">MULAI KERJAKAN</button>
+        </div>
+      </div><br>
+      <hr>
+      <p class="small" style="margin-top:10px">Pastikan nama dan kelas diisi, lalu klik MULAI KERJAKAN.</p>
+      <div style="margin-top:12px" class="small">Waktu  : 25 menit utk 30 soal PILIHAN GANDA, Batas akhir : 12 Desember 2025, pukul 23.59 <br><a id="sheet-link" href="#" target="_blank" rel="noopener">link sumber</a></div>
+    </div>
+
+    <div id="quiz-screen" style="display:none">
+      <div class="meta">
+        <div><strong id="student-name"></strong> <span id="student-class" class="small" style="margin-left:8px"></span></div>
+        <div style="flex:1"></div>
+        <div>Waktu tersisa: <span id="timer" class="timer">25:00</span></div>
+        <div style="margin-left:12px"><button id="btn-submit" class="secondary">Kirim Jawaban</button></div>
+      </div>
+
+      <div class="quiz-wrap">
+        <div class="sidebar card" style="padding:12px">
+          <div class="small" style="margin-bottom:8px">Navigasi Soal</div>
+          <div id="qnum-grid" class="qnum-grid"></div>
+          <div style="margin-top:12px">
+            <div class="small">Jawaban terkini:</div>
+            <div id="answers-box" class="answers-box">- belum ada jawaban -</div>
+          </div>
+        </div>
+
+        <div class="question-panel">
+          <div id="question-card" class="question-card">
+            <div id="question-text" class="question-text">Memuat...</div>
+            <div id="options" class="options"></div>
+
+            <div class="nav-btns">
+              <button id="btn-prev" class="secondary">Prev</button>
+              <button id="btn-next" class="secondary">Next</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div class="small">Jika selesai, klik <strong>Kirim Jawaban</strong> — data akan diisi ke Google Form pra-fill.</div>
+      </div>
+    </div>
+
+    <div id="loading" class="loading" style="display:none">Memuat soal...</div>
+  </div>
+</div>
+
+<script>
+/*
+  Single-file Quiz app
+  - CSV source (Google Sheets) provided by user
+  - Parses columns J..O (user's provided URL already selects columns)
+  - Option format expected: "VALUE] display text", ex: "2-A] belajar giat"
+  - Saved answer format: NAME#KELAS#1-A,2-C,3-D...
+  - Prefill form URL: append &entry.919838460=encodedData
+*/
+
+// ---------- Konfigurasi ----------
+const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1gE_CtB13bAlzFutiHUCGYN29l3XHqRJDJ1tYMobDsmI/gviz/tq?tqx=out:csv&gid=1186327895&tq=select%20J,K,L,M,N,O";
+
+// ---------- BATASAN TANGGAL ----------
+// Format: YYYY-MM-DD (menggunakan waktu lokal browser)
+const START_DATE = "2025-12-11"; // Tanggal mulai
+const END_DATE = "2025-12-12";   // Tanggal berakhir
+// ---------------------------------
+
+// DOM
+const startScreen = document.getElementById("start-screen");
+const quizScreen  = document.getElementById("quiz-screen");
+const loadingEl   = document.getElementById("loading");
+const sheetLinkEl = document.getElementById("sheet-link");
+const inputNama   = document.getElementById("input-nama");
+const inputKelas  = document.getElementById("input-kelas");
+const btnStart    = document.getElementById("btn-start");
+const studentName = document.getElementById("student-name");
+const studentClass= document.getElementById("student-class");
+const timerEl     = document.getElementById("timer");
+const qnumGrid    = document.getElementById("qnum-grid");
+const questionText= document.getElementById("question-text");
+const optionsWrap = document.getElementById("options");
+const answersBox  = document.getElementById("answers-box");
+const btnPrev     = document.getElementById("btn-prev");
+const btnNext     = document.getElementById("btn-next");
+const btnSubmit   = document.getElementById("btn-submit");
+const dateErrorEl = document.getElementById("date-error");
+const dateErrorMsg= document.getElementById("date-error-message");
+
+sheetLinkEl.href = SHEET_CSV_URL;
+sheetLinkEl.textContent = "";
+
+// App state
+let questions = [];
+let answers = [];
+let currentIndex = 0;
+let countdown = 1500; // seconds
+let timerInterval = null;
+let student = {name:"", kelas:""};
+
+// SOLUSI UTAMA: Event Handler yang Compatible dengan Google Sites
+// ================================================================
+
+// Fungsi untuk menginisialisasi semua event handler
+function initializeEventHandlers() {
+  console.log("Menginisialisasi event handlers...");
+  
+  // **SOLUSI 1: Gunakan onclick langsung (lebih kompatibel dengan Google Sites)**
+  if (btnStart) {
+    btnStart.onclick = handleStartClick;
+    btnStart.setAttribute('onclick', 'handleStartClick(event)');
+  }
+  
+  if (btnSubmit) {
+    btnSubmit.onclick = handleSubmitClick;
+    btnSubmit.setAttribute('onclick', 'handleSubmitClick(event)');
+  }
+  
+  if (btnPrev) {
+    btnPrev.onclick = handlePrevClick;
+    btnPrev.setAttribute('onclick', 'handlePrevClick(event)');
+  }
+  
+  if (btnNext) {
+    btnNext.onclick = handleNextClick;
+    btnNext.setAttribute('onclick', 'handleNextClick(event)');
+  }
+  
+  // **SOLUSI 2: Juga tambahkan event listener tradisional sebagai backup**
+  try {
+    if (btnStart) {
+      btnStart.addEventListener('click', handleStartClick);
+    }
+    if (btnSubmit) {
+      btnSubmit.addEventListener('click', handleSubmitClick);
+    }
+    if (btnPrev) {
+      btnPrev.addEventListener('click', handlePrevClick);
+    }
+    if (btnNext) {
+      btnNext.addEventListener('click', handleNextClick);
+    }
+  } catch (e) {
+    console.log("Event listener tradisional gagal, menggunakan onclick saja");
+  }
+  
+  // **SOLUSI 3: Force enable semua tombol**
+  [btnStart, btnSubmit, btnPrev, btnNext].forEach(btn => {
+    if (btn) {
+      btn.disabled = false;
+      btn.style.pointerEvents = 'auto';
+      btn.style.cursor = 'pointer';
+    }
+  });
+}
+
+// Handler functions
+function handleStartClick(e) {
+  if (e) e.preventDefault();
+  console.log("Tombol Start diklik");
+  fetchAndStart();
+}
+
+function handleSubmitClick(e) {
+  if (e) e.preventDefault();
+  console.log("Tombol Submit diklik");
+  stopTimer();
+  doSubmit();
+}
+
+function handlePrevClick(e) {
+  if (e) e.preventDefault();
+  console.log("Tombol Prev diklik");
+  prevQuestion();
+}
+
+function handleNextClick(e) {
+  if (e) e.preventDefault();
+  console.log("Tombol Next diklik");
+  nextQuestion();
+}
+
+// **SOLUSI 4: Event Delegation untuk elemen dinamis**
+document.addEventListener('click', function(e) {
+  // Untuk tombol nomor soal
+  if (e.target && e.target.classList.contains('qnum')) {
+    e.preventDefault();
+    const index = Array.from(qnumGrid.children).indexOf(e.target);
+    if (index >= 0) goToQuestion(index);
+  }
+  
+  // Untuk opsi jawaban
+  if (e.target && e.target.classList.contains('opt')) {
+    e.preventDefault();
+    const index = Array.from(optionsWrap.children).indexOf(e.target);
+    if (index >= 0 && questions[currentIndex] && questions[currentIndex].options[index]) {
+      const opt = questions[currentIndex].options[index];
+      selectOption(currentIndex, opt.displayLetter, opt.letter);
+    }
+  }
+  
+  // Untuk child elements dari .opt
+  if (e.target && e.target.closest('.opt')) {
+    e.preventDefault();
+    const optElement = e.target.closest('.opt');
+    const index = Array.from(optionsWrap.children).indexOf(optElement);
+    if (index >= 0 && questions[currentIndex] && questions[currentIndex].options[index]) {
+      const opt = questions[currentIndex].options[index];
+      selectOption(currentIndex, opt.displayLetter, opt.letter);
+    }
+  }
+});
+
+// **SOLUSI 5: Pastikan inisialisasi dilakukan setelah DOM siap**
+document.addEventListener('DOMContentLoaded', function() {
+  console.log("DOM siap, menginisialisasi...");
+  initializeEventHandlers();
+  checkDateValidity();
+});
+
+// Fungsi untuk mengecek apakah hari ini dalam rentang tanggal yang diizinkan
+function isAllowedDate() {
+  const today = new Date();
+  const startDate = new Date(START_DATE);
+  const endDate = new Date(END_DATE);
+  
+  // Set waktu untuk perbandingan yang tepat
+  startDate.setHours(0, 0, 0, 0);
+  endDate.setHours(23, 59, 59, 999);
+  today.setHours(0, 0, 0, 0);
+  
+  return today >= startDate && today <= endDate;
+}
+
+function checkDateValidity() {
+  if (!isAllowedDate()) {
+    showDateError();
+  }
+}
+
+function showDateError() {
+  const today = new Date();
+  const startDate = new Date(START_DATE);
+  const endDate = new Date(END_DATE);
+  
+  const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+  const startFormatted = startDate.toLocaleDateString('id-ID', options);
+  const endFormatted = endDate.toLocaleDateString('id-ID', options);
+  const todayFormatted = today.toLocaleDateString('id-ID', options);
+  
+  dateErrorMsg.textContent = `Quiz ini hanya dapat dikerjakan dari tanggal ${startFormatted} hingga ${endFormatted}. Hari ini adalah ${todayFormatted}.`;
+  dateErrorEl.style.display = 'block';
+  startScreen.style.display = 'none';
+  btnStart.disabled = true;
+}
+
+// Fungsi untuk mengacak array (Fisher-Yates shuffle)
+function shuffleArray(array) {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
+// Fungsi untuk menghapus kurung di sebelah kiri pertanyaan termasuk angka dalam kurung tutup
+function cleanQuestionText(text) {
+  return text
+    .replace(/^\d+\.\s*\d+[\.\)]\s*/, '')
+    .replace(/^\d+[\.\)]\s*/, '')
+    .trim();
+}
+
+// CSV parser (handles quoted fields)
+function parseCSV(text){
+  const rows = [];
+  let cur = '', inQuotes = false, row = [];
+  for (let i=0;i<text.length;i++){
+    const ch = text[i];
+    if (ch === '"' ){
+      if (inQuotes && text[i+1] === '"'){ cur += '"'; i++; }
+      else inQuotes = !inQuotes;
+      continue;
+    }
+    if (!inQuotes && (ch === ',' || ch === '\n' || ch === '\r')){
+      if (ch === '\r' && text[i+1] === '\n'){ /* skip */ }
+      row.push(cur);
+      cur = '';
+      if (ch === ',') continue;
+      rows.push(row);
+      row = [];
+      continue;
+    }
+    cur += ch;
+  }
+  if (cur !== '' || row.length > 0){
+    row.push(cur);
+    rows.push(row);
+  }
+  return rows;
+}
+
+// Parse option cell like "2-A] belajar giat"
+function parseOptionCell(cell, optionIndex){
+  if (!cell) return null;
+  const splitPos = cell.indexOf(']');
+  let valueRaw = cell;
+  let label = cell;
+  if (splitPos !== -1){
+    valueRaw = cell.slice(0, splitPos).trim();
+    label = cell.slice(splitPos+1).trim();
+  }
+  let letter = null;
+  const mEnd = valueRaw.match(/([A-E])$/i);
+  if (mEnd) letter = mEnd[1].toUpperCase();
+  else {
+    const mAny = valueRaw.match(/([A-E])/i);
+    if (mAny) letter = mAny[1].toUpperCase();
+  }
+  if (!letter) {
+    letter = String.fromCharCode(65 + optionIndex);
+  }
+  
+  const displayLetter = String.fromCharCode(65 + optionIndex);
+  
+  return {valueRaw, label, letter, displayLetter};
+}
+
+function buildQuestionsFromCSV(rows){
+  const out = [];
+  for (let r=0;r<rows.length;r++){
+    const cols = rows[r];
+    if (cols.every(c=>c===undefined||c.toString().trim()==="")) continue;
+    const qtext = cols[0] ? cleanQuestionText(cols[0].toString().trim()) : ("(kosong soal "+(out.length+1)+")");
+    const opts = [];
+    for (let i=1;i<cols.length;i++){
+      const cell = cols[i] ? cols[i].toString().trim() : "";
+      if (!cell) continue;
+      const p = parseOptionCell(cell, opts.length);
+      if (p) opts.push(p);
+    }
+    if (opts.length > 0) {
+      out.push({
+        text: qtext,
+        options: opts,
+        originalIndex: out.length
+      });
+    }
+  }
+  return out;
+}
+
+function renderQnumGrid(){
+  qnumGrid.innerHTML = "";
+  for (let i=0;i<questions.length;i++){
+    const el = document.createElement("div");
+    el.className = "qnum";
+    el.textContent = (i+1);
+    if (i === currentIndex) el.classList.add("active");
+    if (answers[i]) el.classList.add("answered");
+    // Gunakan onclick untuk kompatibilitas Google Sites
+    el.onclick = function(e) {
+      e.preventDefault();
+      goToQuestion(i);
+    };
+    qnumGrid.appendChild(el);
+  }
+}
+
+function renderQuestion(){
+  const MAX_SOAL = 30;
+  
+  if (currentIndex >= MAX_SOAL) return;
+  if (!questions[currentIndex]) return;
+
+  const q = questions[currentIndex];
+  questionText.textContent = `${currentIndex + 1} -- ${q.text}`;
+  optionsWrap.innerHTML = "";
+
+  q.options.forEach((opt, idx)=> {
+    const div = document.createElement("div");
+    div.className = "opt";
+
+    const selected = answers[currentIndex] && answers[currentIndex].displayLetter === opt.displayLetter;
+    if (selected) div.classList.add("selected");
+
+    const disp = opt.label || opt.valueRaw || "Option";
+    div.innerHTML = `
+      <div style="font-weight:600">
+        ${opt.displayLetter}. ${escapeHtml(disp)}
+      </div>
+      <div class="small" style="margin-top:4px;color:#666">
+        kode: ${escapeHtml(opt.letter)}
+      </div>`;
+
+    // Gunakan onclick untuk kompatibilitas Google Sites
+    div.onclick = function(e) {
+      e.preventDefault();
+      selectOption(currentIndex, opt.displayLetter, opt.letter);
+    };
+
+    optionsWrap.appendChild(div);
+  });
+
+  const nodes = qnumGrid.querySelectorAll(".qnum");
+  nodes.forEach((n, idx)=>{ 
+    const isInRange = idx < MAX_SOAL;
+    n.style.display = isInRange ? "flex" : "none";
+    n.classList.toggle("active", idx === currentIndex);
+    n.classList.toggle("answered", !!answers[idx]);
+  });
+}
+
+function selectOption(qIndex, displayLetter, originalLetter){
+  answers[qIndex] = {
+    displayLetter: displayLetter,
+    originalLetter: originalLetter,
+    originalIndex: questions[qIndex].originalIndex
+  };
+  renderQuestion();
+  updateAnswersBox();
+}
+
+function updateAnswersBox(){
+  const answerMap = {};
+  for (let i=0; i<answers.length; i++) {
+    if (answers[i]) {
+      const answer = answers[i];
+      answerMap[answer.originalIndex] = {
+        soalAsli: answer.originalIndex + 1,
+        jawaban: answer.originalLetter
+      };
+    }
+  }
+  const sortedAnswers = Object.values(answerMap)
+    .sort((a, b) => a.soalAsli - b.soalAsli)
+    .map(item => `${item.soalAsli}-${item.jawaban}`);
+  answersBox.textContent = sortedAnswers.length ? sortedAnswers.join(",") : "- belum ada jawaban -";
+}
+
+function goToQuestion(idx){
+  if (idx < 0) idx = 0;
+  if (idx >= questions.length) idx = questions.length - 1;
+  currentIndex = idx;
+  renderQuestion();
+}
+
+function prevQuestion(){ goToQuestion(currentIndex-1); }
+function nextQuestion(){ goToQuestion(currentIndex+1); }
+
+function escapeHtml(s){ 
+  if (!s) return '';
+  return s.replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]); 
+}
+
+// Timer
+function startTimer(){
+  countdown = 1500;
+  timerEl.textContent = formatTime(countdown);
+  if (timerInterval) clearInterval(timerInterval);
+  timerInterval = setInterval(()=>{
+    countdown--;
+    timerEl.textContent = formatTime(countdown);
+    if (countdown <= 0){
+      clearInterval(timerInterval);
+      timerInterval = null;
+      onTimeUp();
+    }
+  }, 1000);
+}
+
+function stopTimer(){
+  if (timerInterval){ 
+    clearInterval(timerInterval); 
+    timerInterval = null; 
+  }
+}
+
+function formatTime(sec){
+  if (sec < 0) sec = 0;
+  const m = Math.floor(sec/60);
+  const s = sec%60;
+  return (m<10?"0":"") + m + ":" + (s<10?"0":"") + s;
+}
+
+function onTimeUp(){
+  doAutoSubmit();
+}
+
+// Build data string NAME#KELAS#1-A,2-C,... (menggunakan soal asli)
+function buildDataString(){
+  const nama = (student.name || "").trim();
+  const kelas = (student.kelas || "").trim();
+  const answerMap = {};
+  for (let i=0; i<answers.length; i++) {
+    if (answers[i]) {
+      const answer = answers[i];
+      answerMap[answer.originalIndex] = {
+        soalAsli: answer.originalIndex + 1,
+        jawaban: answer.originalLetter
+      };
+    }
+  }
+  const sortedAnswers = Object.values(answerMap)
+    .sort((a, b) => a.soalAsli - b.soalAsli)
+    .map(item => `${item.soalAsli}-${item.jawaban}`);
+  const answersStr = sortedAnswers.join(",");
+  return `${nama}#${kelas}#${answersStr}`;
+}
+
+function doAutoSubmit(){
+  const data = buildDataString();
+  if (!student.name || !student.kelas){
+    alert("Nama atau kelas kosong. Kembali ke layar awal.");
+    resetToStart();
+    return;
+  }
+  
+  // **SOLUSI 6: Submit dengan metode yang lebih sederhana**
+  const encodedData = encodeURIComponent(data);
+  const formURL = `https://docs.google.com/forms/d/e/1FAIpQLScb9HUbF57q0-4j-aiyY8mUEf5C80pCO5UF1TdF-wipxmZMfA/formResponse?entry.919838460=${encodedData}`;
+  
+  // Gunakan fetch dengan timeout
+  fetch(formURL, { 
+    method: 'GET',
+    mode: 'no-cors',
+    cache: 'no-cache'
+  }).catch(e => {
+    console.log("Fetch gagal, lanjutkan ke reset");
+  });
+  
+  // Juga buka tab baru sebagai backup
+  window.open(`https://docs.google.com/forms/d/e/1FAIpQLScb9HUbF57q0-4j-aiyY8mUEf5C80pCO5UF1TdF-wipxmZMfA/viewform?usp=pp_url&entry.919838460=${encodedData}`, '_blank');
+  
+  resetToStart();
+  alert("Waktu telah habis! Jawaban telah disimpan.");
+}
+
+function doSubmit(){
+  const data = buildDataString();
+  if (!student.name || !student.kelas){
+    alert("Nama atau kelas kosong. Kembali ke layar awal.");
+    resetToStart();
+    return;
+  }
+  
+  // **SOLUSI 7: Konfirmasi yang lebih sederhana**
+  const answerCount = Object.values(answers).filter(a => a).length;
+  const conf = confirm(`Kirim jawaban sekarang?\n\nNama: ${student.name}\nKelas: ${student.kelas}\nJawaban terisi: ${answerCount}/30\n\nSetelah submit tidak bisa mengubah jawaban.`);
+  
+  if (!conf) {
+    if (!timerInterval) startTimer();
+    return;
+  }
+  
+  const encodedData = encodeURIComponent(data);
+  
+  // **SOLUSI 8: Multiple submission methods untuk reliability**
+  try {
+    // Method 1: Buka form di tab baru
+    window.open(`https://docs.google.com/forms/d/e/1FAIpQLScb9HUbF57q0-4j-aiyY8mUEf5C80pCO5UF1TdF-wipxmZMfA/viewform?usp=pp_url&entry.919838460=${encodedData}`, '_blank');
+    
+    // Method 2: Submit langsung (no-cors)
+    fetch(`https://docs.google.com/forms/d/e/1FAIpQLScb9HUbF57q0-4j-aiyY8mUEf5C80pCO5UF1TdF-wipxmZMfA/formResponse?entry.919838460=${encodedData}`, {
+      method: 'GET',
+      mode: 'no-cors'
+    });
+    
+    // Method 3: Buat form hidden dan submit
+    const hiddenForm = document.createElement('form');
+    hiddenForm.method = 'POST';
+    hiddenForm.action = 'https://docs.google.com/forms/d/e/1FAIpQLScb9HUbF57q0-4j-aiyY8mUEf5C80pCO5UF1TdF-wipxmZMfA/formResponse';
+    hiddenForm.target = '_blank';
+    hiddenForm.style.display = 'none';
+    
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'entry.919838460';
+    input.value = data;
+    
+    hiddenForm.appendChild(input);
+    document.body.appendChild(hiddenForm);
+    hiddenForm.submit();
+    setTimeout(() => document.body.removeChild(hiddenForm), 1000);
+    
+  } catch (error) {
+    console.error("Error submitting:", error);
+  }
+  
+  resetToStart();
+  alert("Jawaban telah disimpan! Form telah dibuka di tab baru.");
+}
+
+function resetToStart(){
+  stopTimer();
+  questions = [];
+  answers = [];
+  currentIndex = 0;
+  student = {name:"", kelas:""};
+  
+  quizScreen.style.display = "none";
+  startScreen.style.display = "block";
+  loadingEl.style.display = "none";
+  inputNama.value = "";
+  inputKelas.value = "";
+  answersBox.textContent = "- belum ada jawaban -";
+  qnumGrid.innerHTML = "";
+  questionText.textContent = "";
+  
+  // **SOLUSI 9: Re-initialize event handlers setelah reset**
+  setTimeout(initializeEventHandlers, 100);
+  
+  if (!isAllowedDate()) {
+    showDateError();
+  }
+}
+
+async function fetchAndStart(){
+  if (!isAllowedDate()) {
+    showDateError();
+    return;
+  }
+  
+  const nama = inputNama.value.trim();
+  const kelas = inputKelas.value.trim();
+  if (!nama || !kelas){
+    alert("Silakan isi Nama dan Kelas terlebih dahulu.");
+    return;
+  }
+  
+  student.name = nama;
+  student.kelas = kelas;
+  studentName.textContent = nama;
+  studentClass.textContent = kelas;
+
+  startScreen.style.display = "none";
+  loadingEl.style.display = "block";
+  quizScreen.style.display = "none";
+
+  try {
+    const resp = await fetch(SHEET_CSV_URL);
+    if (!resp.ok) throw new Error("Gagal mengambil CSV: " + resp.status);
+    const txt = await resp.text();
+    const rows = parseCSV(txt);
+    const qs = buildQuestionsFromCSV(rows);
+    if (!qs.length) throw new Error("Tidak ditemukan soal pada sheet.");
+    
+    const shuffledQs = shuffleArray(qs);
+    shuffledQs.forEach(question => {
+      question.options = shuffleArray(question.options);
+      question.options.forEach((opt, idx) => {
+        opt.displayLetter = String.fromCharCode(65 + idx);
+      });
+    });
+    
+    questions = shuffledQs;
+    answers = new Array(questions.length).fill(null);
+    currentIndex = 0;
+    
+    renderQnumGrid();
+    renderQuestion();
+    updateAnswersBox();
+    
+    loadingEl.style.display = "none";
+    quizScreen.style.display = "block";
+    
+    // **SOLUSI 10: Re-initialize event handlers untuk tombol di quiz screen**
+    setTimeout(() => {
+      initializeEventHandlers();
+      startTimer();
+    }, 100);
+    
+  } catch (err){
+    loadingEl.style.display = "none";
+    startScreen.style.display = "block";
+    alert("Terjadi kesalahan saat memuat soal:\n" + err.message);
+    console.error(err);
+  }
+}
+
+// **SOLUSI 11: Panggil initializeEventHandlers saat window load**
+window.addEventListener('load', function() {
+  console.log("Window loaded, initializing...");
+  initializeEventHandlers();
+  checkDateValidity();
+});
+
+// **SOLUSI 12: Tambahkan fallback untuk beforeunload**
+window.addEventListener("beforeunload", (e)=>{
+  if (quizScreen.style.display === "block"){
+    e.preventDefault();
+    e.returnValue = 'Apakah Anda yakin ingin meninggalkan halaman? Jawaban Anda mungkin belum tersimpan.';
+  }
+});
+
+// Initial call
+resetToStart();
+
+</script>
+</body>
+</html>
