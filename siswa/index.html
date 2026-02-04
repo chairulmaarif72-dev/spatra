@@ -1,0 +1,384 @@
+ <!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRUD GViz Web - Professional with Import</title>
+<!-- Fonts & Icons -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<!-- Library SheetJS untuk Excel -->
+<script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
+
+<style>
+  /* --- CSS VARIABLES --- */
+  :root {
+    --primary-color: #4F46E5;
+    --primary-hover: #4338ca;
+    --bg-color: #F3F4F6;
+    --card-bg: #FFFFFF;
+    --text-main: #1F2937;
+    --text-muted: #6B7280;
+    --border-color: #E5E7EB;
+    --danger-color: #EF4444;
+    --success-color: #10B981;
+    --table-header: #111827;
+    --table-header-text: #F9FAFB;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --radius: 8px;
+  }
+
+  /* --- GLOBAL --- */
+  * { box-sizing: border-box; margin: 0; padding: 0; outline: none; }
+  body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); color: var(--text-main); padding: 20px; line-height: 1.5; }
+
+  .container { max-width: 1200px; margin: 0 auto; background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow-md); padding: 24px; }
+
+  /* --- HEADER & BUTTONS --- */
+  .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 15px; }
+  .header h2 { font-size: 1.5rem; font-weight: 700; color: var(--table-header); display: flex; align-items: center; gap: 10px; }
+  
+  .header-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+  .btn { padding: 10px 20px; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 600; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; }
+  .btn-primary { background-color: var(--primary-color); color: white; }
+  .btn-primary:hover { background-color: var(--primary-hover); }
+  .btn-success { background-color: var(--success-color); color: white; }
+  .btn-success:hover { background-color: #059669; }
+  .btn-outline { background-color: transparent; border: 1px solid var(--border-color); color: var(--text-main); }
+  .btn-outline:hover { background-color: #F9FAFB; border-color: var(--text-muted); }
+  
+  /* --- CONTROLS --- */
+  .controls { display: flex; gap: 12px; margin-bottom: 20px; }
+  .input-group { position: relative; flex-grow: 1; max-width: 400px; }
+  .input-group i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
+  .search-input { width: 100%; padding: 10px 12px 10px 38px; border: 1px solid var(--border-color); border-radius: var(--radius); font-size: 0.95rem; transition: 0.2s; }
+  .search-input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
+
+  /* --- TABLE --- */
+  .table-container { overflow-x: auto; border: 1px solid var(--border-color); border-radius: var(--radius); }
+  table { width: 100%; border-collapse: collapse; min-width: 600px; }
+  th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; }
+  th { background-color: var(--table-header); color: var(--table-header-text); font-weight: 600; text-transform: uppercase; font-size: 0.75rem; }
+  tr:hover td { background-color: #F9FAFB; }
+  .action-cell { display: flex; gap: 8px; }
+  .btn-sm { padding: 6px 10px; font-size: 0.8rem; }
+  
+  /* --- MODALS --- */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease; }
+  .modal-overlay.active { display: flex; opacity: 1; }
+  .modal-box { background: white; padding: 24px; width: 100%; max-width: 450px; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  .modal-overlay.active .modal-box { transform: scale(1); }
+  .modal-header { margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+  .modal-header h3 { font-size: 1.25rem; font-weight: 700; color: var(--text-main); }
+  
+  .form-group { margin-bottom: 16px; }
+  .form-group label { display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 6px; color: var(--text-main); }
+  .form-control { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: var(--radius); font-size: 1rem; transition: 0.2s; }
+  .form-control:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
+  
+  /* --- DRAG & DROP IMPORT ZONE --- */
+  .drop-zone { border: 2px dashed var(--border-color); border-radius: var(--radius); padding: 30px; text-align: center; cursor: pointer; transition: 0.2s; background: #F9FAFB; }
+  .drop-zone:hover, .drop-zone.dragover { border-color: var(--primary-color); background: #EEF2FF; }
+  .drop-zone i { font-size: 2rem; color: var(--text-muted); margin-bottom: 10px; }
+  .drop-zone p { color: var(--text-muted); font-size: 0.9rem; }
+  
+  /* --- LOADING & TOAST --- */
+  .loading-overlay { display: none; position: fixed; inset: 0; z-index: 2000; background: rgba(255,255,255,0.8); align-items: center; justify-content: center; flex-direction: column; }
+  .spinner { width: 40px; height: 40px; border: 4px solid #E5E7EB; border-top: 4px solid var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite; }
+  @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+  .toast { position: fixed; bottom: 20px; right: 20px; background: #1F2937; color: white; padding: 12px 20px; border-radius: var(--radius); box-shadow: var(--shadow-md); transform: translateY(100px); opacity: 0; transition: all 0.3s ease; z-index: 3000; display: flex; align-items: center; gap: 10px; }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.success i { color: var(--success-color); }
+  .toast.error i { color: var(--danger-color); }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- HEADER -->
+  <div class="header">
+    <h2><i class="fas fa-graduation-cap" style="color: var(--primary-color);"></i> Data Siswa</h2>
+    <div class="header-actions">
+      <button class="btn btn-outline" onclick="downloadTemplate()">
+        <i class="fas fa-file-excel"></i> Unduh Template
+      </button>
+      <button class="btn btn-success" onclick="openImportModal()">
+        <i class="fas fa-upload"></i> Import Excel
+      </button>
+      <button class="btn btn-primary" onclick="openAdd()">
+        <i class="fas fa-plus"></i> Tambah
+      </button>
+    </div>
+  </div>
+
+  <!-- CONTROLS -->
+  <div class="controls">
+    <div class="input-group">
+      <i class="fas fa-search"></i>
+      <input type="text" id="q" class="search-input" placeholder="Cari Nama atau Kelas..." onkeyup="load()">
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 50px;">No</th>
+          <th>Nama</th>
+          <th>Kelas</th>
+          <th>MT</th>
+          <th>KIM</th>
+          <th>BI</th>
+          <th style="width: 120px;">Aksi</th>
+        </tr>
+      </thead>
+      <tbody id="tb"></tbody>
+    </table>
+    <div id="empty-state" style="display:none; text-align:center; padding: 40px; color: var(--text-muted);">
+      <i class="fas fa-folder-open" style="font-size: 2rem; margin-bottom: 10px;"></i>
+      <p>Tidak ada data ditemukan.</p>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL FORM (ADD/EDIT) -->
+<div class="modal-overlay" id="m">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="title">Form Data</h3>
+      <button onclick="closeM()" style="background:none; border:none; cursor:pointer; color:var(--text-muted);"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="norek">
+      <div class="form-group"><label>Nama Lengkap</label><input type="text" id="nama" class="form-control" placeholder="Nama Siswa"></div>
+      <div class="form-group"><label>Kelas</label><input type="text" id="kelas" class="form-control" placeholder="Contoh: XII-2"></div>
+      <div style="display: flex; gap: 10px;">
+        <div class="form-group" style="flex:1;"><label>MT</label><input type="number" id="mt" class="form-control"></div>
+        <div class="form-group" style="flex:1;"><label>KIM</label><input type="number" id="kim" class="form-control"></div>
+        <div class="form-group" style="flex:1;"><label>BI</label><input type="number" id="bi" class="form-control"></div>
+      </div>
+    </div>
+    <div class="modal-header" style="margin-top:20px; margin-bottom:0;">
+      <button class="btn btn-secondary" onclick="closeM()">Batal</button>
+      <button class="btn btn-primary" onclick="save()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL IMPORT -->
+<div class="modal-overlay" id="m-import">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>Import Data Excel</h3>
+      <button onclick="closeImportModal()" style="background:none; border:none; cursor:pointer; color:var(--text-muted);"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="drop-zone" id="drop-zone">
+        <i class="fas fa-cloud-upload-alt"></i>
+        <p>Klik untuk memilih file atau tarik file Excel ke sini (.xlsx)</p>
+        <input type="file" id="fileInput" accept=".xlsx, .xls" style="display:none">
+      </div>
+      <div id="file-info" style="margin-top:10px; font-size:0.9rem; color:var(--primary-color); display:none;">
+        File terpilih: <span id="filename"></span>
+      </div>
+    </div>
+    <div class="modal-header" style="margin-top:20px; margin-bottom:0;">
+      <button class="btn btn-secondary" onclick="closeImportModal()">Batal</button>
+      <button class="btn btn-primary" onclick="processImport()">Upload Data</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOADING & TOAST -->
+<div class="loading-overlay" id="loading"><div class="spinner"></div><p style="margin-top:10px; font-weight:500;">Memproses...</p></div>
+<div class="toast" id="toast"><i class="fas fa-info-circle"></i><span id="toast-msg">Pesan</span></div>
+
+<script>
+// --- KONFIGURASI ---
+const SS = "1KgfnQANS5-XYTuJf7O5X2t86q3EKmNTDmsIe3n3ZX7k";
+const GID = 0;
+const GVIZ = `https://docs.google.com/spreadsheets/d/${SS}/gviz/tq?gid=${GID}`;
+// PASTIKAN URL API INI DIPERBARUI DENGAN SCRIPT BARU (IMPORT SUPPORT)
+const API = "https://script.google.com/macros/s/AKfycbzmV4ynRFQ3xBbruaMf-s5ZmYHF18gzzFYBRqchgOc-fMiXBSNvKpzkXlM1yKYk34hJ/exec"; 
+let rows = [];
+
+// --- UTILS ---
+function showLoading(show) { document.getElementById('loading').style.display = show ? 'flex' : 'none'; }
+function showToast(msg, type = 'success') {
+  const toast = document.getElementById('toast');
+  toast.querySelector('i').className = type === 'success' ? "fas fa-check-circle" : "fas fa-exclamation-circle";
+  document.getElementById('toast-msg').innerText = msg;
+  toast.className = `toast ${type} show`;
+  setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+// --- CORE CRUD ---
+function load(){
+  showLoading(true);
+  const q = document.getElementById('q').value || '';
+  const tq = `SELECT A,B,C,D,E,F WHERE G IS NULL AND (B CONTAINS '${q}' OR C CONTAINS '${q}') ORDER BY A ASC LABEL A 'No', B 'Nama', C 'Kelas', D 'MT', E 'KIM', F 'BI'`;
+  fetch(GVIZ + '&tq=' + encodeURIComponent(tq))
+    .then(r=>r.text())
+    .then(t=>JSON.parse(t.match(/google\.visualization\.Query\.setResponse\(([\s\S\w]+)\)/)[1]))
+    .then(j=>{
+      rows = j.table.rows;
+      render();
+      showLoading(false);
+    })
+    .catch(err => { console.error(err); showLoading(false); showToast("Gagal memuat data", "error"); });
+}
+
+function render(){
+  const tb = document.getElementById('tb');
+  const empty = document.getElementById('empty-state');
+  tb.innerHTML = '';
+  if (rows.length === 0) { empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  rows.forEach(r=>{
+    const c = r.c.map(x=> (x === null) ? '' : x.v);
+    tb.innerHTML += `<tr>
+      <td><b>${c[0]}</b></td>
+      <td>${c[1]}</td>
+      <td><span style="background:#E0E7FF; color:var(--primary-color); padding:2px 6px; border-radius:4px; font-size:0.8rem;">${c[2]}</span></td>
+      <td>${c[3]}</td><td>${c[4]}</td><td>${c[5]}</td>
+      <td class="action-cell">
+        <button class="btn btn-outline btn-sm" onclick='edit(${JSON.stringify(c)})'><i class="fas fa-pencil-alt"></i></button>
+        <button class="btn btn-danger btn-sm" onclick='del(${c[0]})'><i class="fas fa-trash-alt"></i></button>
+      </td>
+    </tr>`;
+  });
+}
+
+// --- MODAL HANDLING ---
+function openAdd(){
+  document.getElementById('title').innerText = 'Tambah Data'; document.getElementById('norek').value = '';
+  ['nama','kelas','mt','kim','bi'].forEach(id=>document.getElementById(id).value='');
+  openModal('m');
+}
+function edit(c){
+  document.getElementById('title').innerText = 'Edit Data';
+  document.getElementById('norek').value = c[0]; document.getElementById('nama').value = c[1];
+  document.getElementById('kelas').value = c[2]; document.getElementById('mt').value = c[3];
+  document.getElementById('kim').value = c[4]; document.getElementById('bi').value = c[5];
+  openModal('m');
+}
+function save(){
+  const payload = { action: document.getElementById('norek').value ? 'EDIT' : 'ADD', norek: Number(document.getElementById('norek').value), data: [document.getElementById('nama').value, document.getElementById('kelas').value, Number(document.getElementById('mt').value), Number(document.getElementById('kim').value), Number(document.getElementById('bi').value)] };
+  if(!payload.data[0] || !payload.data[1]) return showToast("Nama & Kelas wajib!", "error");
+  sendApi(payload, "Data berhasil disimpan!");
+}
+function del(no){ if(confirm('Hapus data ini?')) sendApi({action:'DELETE', norek:no}, "Data dihapus!"); }
+function closeM(){ closeModal('m'); }
+
+function openModal(id){ const el=document.getElementById(id); el.style.display='flex'; setTimeout(()=>el.classList.add('active'),10); }
+function closeModal(id){ const el=document.getElementById(id); el.classList.remove('active'); setTimeout(()=>el.style.display='none',300); }
+function sendApi(payload, msg){ showLoading(true); fetch(API, {method:'POST', body:JSON.stringify(payload)}).then(()=>{ closeModal('m'); closeModal('m-import'); load(); showToast(msg); }).catch(e=>{showLoading(false); showToast("Error!", "error");}); }
+
+// --- EXCEL FEATURES ---
+
+// 1. Download Template
+function downloadTemplate(){
+  const wb = XLSX.utils.book_new();
+  const ws_data = [
+    ["Nama", "Kelas", "MT", "KIM", "BI"],
+    ["Chairul", "XII-2", 90, 85, 88],
+    ["Budi", "XI-1", 75, 80, 70]
+  ];
+  const ws = XLSX.utils.aoa_to_sheet(ws_data);
+  XLSX.utils.book_append_sheet(wb, ws, "Template");
+  XLSX.writeFile(wb, "template_siswa.xlsx");
+}
+
+// 2. Handle Modal Import
+function openImportModal(){
+  document.getElementById('fileInput').value = "";
+  document.getElementById('file-info').style.display = 'none';
+  openModal('m-import');
+}
+function closeImportModal(){ closeModal('m-import'); }
+
+// 3. Drag & Drop Logic
+const dropZone = document.getElementById('drop-zone');
+const fileInput = document.getElementById('fileInput');
+
+dropZone.onclick = () => fileInput.click();
+fileInput.onchange = (e) => { if(e.target.files[0]) handleFileSelect(e.target.files[0]); };
+
+dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('dragover'); };
+dropZone.ondragleave = () => dropZone.classList.remove('dragover');
+dropZone.ondrop = (e) => {
+  e.preventDefault(); dropZone.classList.remove('dragover');
+  if(e.dataTransfer.files[0]) handleFileSelect(e.dataTransfer.files[0]);
+};
+
+function handleFileSelect(file){
+  document.getElementById('filename').innerText = file.name;
+  document.getElementById('file-info').style.display = 'block';
+}
+
+// 4. Proses Import Excel
+function processImport(){
+  const file = fileInput.files[0];
+  if(!file) return showToast("Pilih file Excel terlebih dahulu!", "error");
+
+  showLoading(true);
+  const reader = new FileReader();
+  
+  reader.onload = function(e) {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, {type: 'array'});
+      
+      // Ambil sheet pertama
+      const firstSheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[firstSheetName];
+      
+      // Konversi ke Array of Arrays (header:1 artinya pakai index baris/kolom)
+      const json = XLSX.utils.sheet_to_json(worksheet, {header: 1});
+      
+      // Validasi sederhana (skip header di index 0)
+      if(json.length < 2) throw new Error("File kosong atau salah format");
+      
+      // Mapping data: Format [Nama, Kelas, MT, KIM, BI]
+      // Asumsi kolom di excel urut: 0=Nama, 1=Kelas, 2=MT, 3=KIM, 4=BI
+      const dataToImport = [];
+      for(let i = 1; i < json.length; i++){
+        const row = json[i];
+        if(row.length > 0 && row[0]){ // Pastikan ada nama
+          dataToImport.push([
+            row[0] || "", // Nama
+            row[1] || "", // Kelas
+            Number(row[2]) || 0, // MT
+            Number(row[3]) || 0, // KIM
+            Number(row[4]) || 0  // BI
+          ]);
+        }
+      }
+      
+      if(dataToImport.length === 0) throw new Error("Tidak ada valid data untuk diimport");
+      
+      // Kirim ke API
+      const payload = {
+        action: 'IMPORT',
+        data: dataToImport
+      };
+      
+      sendApi(payload, `Berhasil import ${dataToImport.length} data!`);
+      
+    } catch (err) {
+      showLoading(false);
+      showToast("Gagal baca file: " + err.message, "error");
+    }
+  };
+  
+  reader.readAsArrayBuffer(file);
+}
+
+load();
+</script>
+</body>
+</html>
