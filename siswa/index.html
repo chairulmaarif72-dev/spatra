@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="id">
 <head>
 <meta charset="UTF-8">
@@ -49,6 +49,13 @@
   .btn-outline { background-color: transparent; border: 1px solid var(--border-color); color: var(--text-main); }
   .btn-outline:hover { background-color: #F9FAFB; border-color: var(--text-muted); }
   
+  /* --- KELAS FILTER TABS --- */
+  .kelas-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid var(--border-color); }
+  .kelas-tab { padding: 8px 16px; background: transparent; border: 1px solid var(--border-color); border-radius: 20px; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.2s; color: var(--text-muted); }
+  .kelas-tab:hover { background-color: #F9FAFB; border-color: var(--primary-color); color: var(--primary-color); }
+  .kelas-tab.active { background-color: var(--primary-color); border-color: var(--primary-color); color: white; }
+  .kelas-tab.all { border: 1px dashed var(--border-color); }
+
   /* --- CONTROLS --- */
   .controls { display: flex; gap: 12px; margin-bottom: 20px; }
   .input-group { position: relative; flex-grow: 1; max-width: 400px; }
@@ -114,6 +121,12 @@
     </div>
   </div>
 
+  <!-- KELAS TABS FILTER -->
+  <div class="kelas-tabs" id="kelasTabs">
+    <button class="kelas-tab all active" onclick="filterByKelas('semua')">Semua Kelas</button>
+    <!-- Tab kelas akan di-generate otomatis -->
+  </div>
+
   <!-- CONTROLS -->
   <div class="controls">
     <div class="input-group">
@@ -130,9 +143,9 @@
           <th style="width: 50px;">No</th>
           <th>Nama</th>
           <th>Kelas</th>
-          <th>MT</th>
-          <th>KIM</th>
-          <th>BI</th>
+          <th>TEXT</th>
+          <th>BACA</th>
+          <th>TAJWID</th>
           <th style="width: 120px;">Aksi</th>
         </tr>
       </thead>
@@ -205,6 +218,9 @@ const GVIZ = `https://docs.google.com/spreadsheets/d/${SS}/gviz/tq?gid=${GID}`;
 // PASTIKAN URL API INI DIPERBARUI DENGAN SCRIPT BARU (IMPORT SUPPORT)
 const API = "https://script.google.com/macros/s/AKfycbzmV4ynRFQ3xBbruaMf-s5ZmYHF18gzzFYBRqchgOc-fMiXBSNvKpzkXlM1yKYk34hJ/exec"; 
 let rows = [];
+let filteredRows = [];
+let activeKelasFilter = 'semua';
+let uniqueKelas = [];
 
 // --- UTILS ---
 function showLoading(show) { document.getElementById('loading').style.display = show ? 'flex' : 'none'; }
@@ -226,19 +242,84 @@ function load(){
     .then(t=>JSON.parse(t.match(/google\.visualization\.Query\.setResponse\(([\s\S\w]+)\)/)[1]))
     .then(j=>{
       rows = j.table.rows;
+      // Ekstrak kelas unik
+      extractUniqueKelas();
+      // Filter berdasarkan kelas aktif
+      filterRowsByKelas();
       render();
       showLoading(false);
     })
     .catch(err => { console.error(err); showLoading(false); showToast("Gagal memuat data", "error"); });
 }
 
+function extractUniqueKelas() {
+  const kelasSet = new Set();
+  rows.forEach(r => {
+    const kelas = r.c[2] ? r.c[2].v : '';
+    if (kelas && kelas.trim() !== '') {
+      kelasSet.add(kelas.trim());
+    }
+  });
+  uniqueKelas = Array.from(kelasSet).sort();
+  renderKelasTabs();
+}
+
+function renderKelasTabs() {
+  const tabsContainer = document.getElementById('kelasTabs');
+  let tabsHTML = `
+    <button class="kelas-tab all ${activeKelasFilter === 'semua' ? 'active' : ''}" onclick="filterByKelas('semua')">
+      Semua Kelas
+    </button>
+  `;
+  
+  uniqueKelas.forEach(kelas => {
+    tabsHTML += `
+      <button class="kelas-tab ${activeKelasFilter === kelas ? 'active' : ''}" onclick="filterByKelas('${kelas}')">
+        ${kelas}
+      </button>
+    `;
+  });
+  
+  tabsContainer.innerHTML = tabsHTML;
+}
+
+function filterByKelas(kelas) {
+  activeKelasFilter = kelas;
+  filterRowsByKelas();
+  render();
+  renderKelasTabs();
+}
+
+function filterRowsByKelas() {
+  if (activeKelasFilter === 'semua') {
+    filteredRows = rows;
+  } else {
+    filteredRows = rows.filter(r => {
+      const kelas = r.c[2] ? r.c[2].v : '';
+      return kelas === activeKelasFilter;
+    });
+  }
+}
+
 function render(){
   const tb = document.getElementById('tb');
   const empty = document.getElementById('empty-state');
   tb.innerHTML = '';
-  if (rows.length === 0) { empty.style.display = 'block'; return; }
+  
+  if (filteredRows.length === 0) { 
+    empty.style.display = 'block'; 
+    return; 
+  }
+  
   empty.style.display = 'none';
-  rows.forEach(r=>{
+  
+  // Tampilkan counter jumlah siswa di header jika filter aktif
+  const tabHeader = document.querySelector('.kelas-tab.active');
+  if (tabHeader && activeKelasFilter !== 'semua') {
+    tabHeader.innerHTML = `${activeKelasFilter} <span style="background:white; color:var(--primary-color); padding:1px 6px; border-radius:10px; font-size:0.7rem; margin-left:5px;">${filteredRows.length}</span>`;
+  }
+  
+  filteredRows.forEach(r=>{
     const c = r.c.map(x=> (x === null) ? '' : x.v);
     tb.innerHTML += `<tr>
       <td><b>${c[0]}</b></td>
@@ -284,7 +365,7 @@ function sendApi(payload, msg){ showLoading(true); fetch(API, {method:'POST', bo
 function downloadTemplate(){
   const wb = XLSX.utils.book_new();
   const ws_data = [
-    ["Nama", "Kelas", "MT", "KIM", "BI"],
+    ["Nama", "Kelas", "TEXT", "BACA", "TAJWID"],
     ["Chairul", "XII-2", 90, 85, 88],
     ["Budi", "XI-1", 75, 80, 70]
   ];
