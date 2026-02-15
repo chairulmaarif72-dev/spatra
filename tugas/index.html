@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Upload Tugas Google Sheet</title>
+
+<style>
+body{font-family:Arial;background:#f4f6fb;padding:20px;}
+.container{max-width:800px;margin:auto;background:#fff;padding:25px;border-radius:10px;box-shadow:0 5px 15px rgba(0,0,0,.1);}
+label{font-weight:bold;display:block;margin-top:10px;}
+input,textarea{width:100%;padding:8px;margin-top:5px;border:1px solid #ccc;border-radius:5px;}
+textarea{min-height:100px;}
+button{margin-top:15px;padding:10px;width:100%;background:#2b7cff;color:white;border:none;border-radius:5px;font-size:16px;cursor:pointer;}
+button:hover{background:#1f5ed6;}
+#status{margin-top:10px;font-size:14px;}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+<h2>FORM PENGUMPULAN TUGAS</h2>
+
+<label>KELAS</label>
+<input type="text" id="kelas">
+
+<label>NAMA</label>
+<input type="text" id="nama">
+
+<label>BAB</label>
+<input type="text" id="bab">
+
+<label>MATERI TUGAS</label>
+<input type="text" id="materi">
+
+<label>TEKS JAWABAN</label>
+<textarea id="jawaban"></textarea>
+
+<label>UNGGAH DOKUMEN (JPG / PDF)</label>
+<input type="file" id="file" accept=".jpg,.jpeg,.png,.pdf">
+
+<button onclick="kirimData()">SIMPAN</button>
+
+<div id="status"></div>
+
+</div>
+
+<script>
+
+const WEBAPP_URL = "https://script.google.com/a/macros/guru.sma.belajar.id/s/AKfycbzSS3cqjdKmUWGIJhnmFPQAHWZxWeZFfPQnacSZPKzfAW0G9zZ0TAP8rTDX-aiiCITO/exec"; // <-- GANTI
+
+function kirimData(){
+
+const kelas = document.getElementById("kelas").value;
+const nama = document.getElementById("nama").value;
+const bab = document.getElementById("bab").value;
+const materi = document.getElementById("materi").value;
+const jawaban = document.getElementById("jawaban").value;
+const fileInput = document.getElementById("file");
+const file = fileInput.files[0];
+
+if(!kelas || !nama || !bab || !materi || !jawaban){
+    alert("Semua field wajib diisi!");
+    return;
+}
+
+if(file){
+    const reader = new FileReader();
+    reader.onload = function(e){
+        kirimKeServer(kelas,nama,bab,materi,jawaban,file.name,e.target.result);
+    }
+    reader.readAsDataURL(file);
+}else{
+    kirimKeServer(kelas,nama,bab,materi,jawaban,"","");
+}
+
+}
+
+function kirimKeServer(kelas,nama,bab,materi,jawaban,fileName,fileData){
+
+document.getElementById("status").innerHTML="Mengirim data...";
+
+fetch(WEBAPP_URL,{
+method:"POST",
+body: JSON.stringify({
+    kelas,
+    nama,
+    bab,
+    materi,
+    jawaban,
+    fileName,
+    fileData
+})
+})
+.then(res=>res.json())
+.then(res=>{
+    if(res.status==="success"){
+        document.getElementById("status").innerHTML="✅ Data berhasil tersimpan!";
+        resetForm();
+    }else{
+        document.getElementById("status").innerHTML="❌ Gagal menyimpan!";
+    }
+})
+.catch(err=>{
+    document.getElementById("status").innerHTML="❌ Error koneksi!";
+});
+
+}
+
+function resetForm(){
+document.getElementById("kelas").value="";
+document.getElementById("nama").value="";
+document.getElementById("bab").value="";
+document.getElementById("materi").value="";
+document.getElementById("jawaban").value="";
+document.getElementById("file").value="";
+}
+
+</script>
+
+</body>
+</html>
