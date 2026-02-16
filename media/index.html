@@ -1,1 +1,503 @@
 
+ <!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+<title>Platform Diklat • Responsive</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+*{
+  box-sizing: border-box;
+}
+body{
+  margin:0;
+  font-family:'Poppins', sans-serif;
+  background:#f4f6f8;
+}
+
+/* HEADER */
+.header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:15px 20px;
+  font-weight:600;
+  background:white;
+  border-radius:0 0 18px 18px;
+  margin-bottom:8px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.03);
+}
+
+.header-user{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.header-user img{
+  width:35px;
+  height:35px;
+  border-radius:50%;
+  object-fit:cover;
+  border:2px solid #0fa3b1;
+}
+
+.login-btn, .mini-btn{
+  background:#0fa3b1;
+  border:none;
+  color:white;
+  padding:6px 14px;
+  border-radius:30px;
+  font-size:13px;
+  font-weight:500;
+  cursor:pointer;
+  transition:0.2s;
+}
+.mini-btn{
+  background:#e6eef0;
+  color:#0b5e68;
+}
+.login-btn:hover, .mini-btn:hover{
+  opacity:0.85;
+}
+
+/* GRID responsif */
+.card-grid{
+  display:grid;
+  grid-template-columns:repeat(2, 1fr); /* default HP: 2 kolom */
+  gap:12px;
+  padding:0 12px 20px 12px;
+}
+
+/* untuk layar lebar (desktop) */
+@media (min-width:768px){
+  .card-grid{
+    grid-template-columns:repeat(4, 1fr); /* tablet/desktop: 4 kolom */
+  }
+}
+
+/* CARD standar (beranda) */
+.card{
+  background:white;
+  border-radius:22px;
+  padding:14px;
+  box-shadow:0 4px 10px rgba(0,0,0,0.05);
+  transition:0.2s;
+  display:flex;
+  flex-direction:column;
+}
+.card:hover{
+  box-shadow:0 8px 18px rgba(0,0,0,0.08);
+}
+.card img{
+  width:100%;
+  aspect-ratio:1/1;
+  object-fit:cover;
+  border-radius:16px;
+  background:#eee;
+}
+.card h3, .card h4{
+  margin:10px 0 4px;
+  font-size:1rem;
+  font-weight:600;
+}
+.small{
+  font-size:0.75rem;
+  color:#666;
+  margin:0;
+  line-height:1.4;
+}
+
+/* LAYOUT MANDIRI (horizontal card) */
+.mandiri-grid{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+  padding:0 12px 20px 12px;
+}
+.mandiri-card{
+  background:white;
+  border-radius:22px;
+  padding:14px;
+  box-shadow:0 4px 12px rgba(0,0,0,0.04);
+  display:flex;
+  gap:16px;
+  align-items:center;
+}
+.mandiri-card img{
+  width:90px;
+  height:90px;
+  border-radius:20px;
+  object-fit:cover;
+  background:#ddd;
+  flex-shrink:0;
+}
+.mandiri-content{
+  flex:1;
+}
+.mandiri-content h4{
+  margin:0 0 6px;
+  font-size:1.1rem;
+  font-weight:600;
+  color:#1e2b37;
+}
+.mandiri-content p{
+  margin:0;
+  font-size:0.85rem;
+  color:#3f5564;
+  line-height:1.4;
+}
+
+/* TAB MEMBER */
+.member-grid{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  padding:0 12px 20px 12px;
+}
+.member-row{
+  background:white;
+  border-radius:50px;
+  padding:8px 16px 8px 8px;
+  display:flex;
+  align-items:center;
+  gap:15px;
+  box-shadow:0 2px 8px rgba(0,0,0,0.05);
+}
+.member-avatar{
+  width:48px;
+  height:48px;
+  border-radius:50%;
+  object-fit:cover;
+  border:2px solid #0fa3b1;
+}
+.member-info{
+  flex:1;
+}
+.member-name{
+  font-weight:600;
+  font-size:1rem;
+}
+.member-badge{
+  font-size:0.7rem;
+  background:#d9f0f3;
+  color:#0b5e68;
+  padding:3px 10px;
+  border-radius:30px;
+  display:inline-block;
+  margin-top:4px;
+}
+
+/* BOTTOM NAV */
+.bottom-nav{
+  position:fixed;
+  bottom:0;
+  width:100%;
+  background:white;
+  display:flex;
+  justify-content:space-around;
+  padding:12px 0 18px;
+  box-shadow:0 -4px 12px rgba(0,0,0,0.05);
+  border-radius:30px 30px 0 0;
+  z-index:10;
+}
+.bottom-nav div{
+  font-weight:500;
+  color:#1e3b4a;
+  cursor:pointer;
+  padding:6px 16px;
+  border-radius:40px;
+  transition:0.2s;
+}
+.bottom-nav div:hover{
+  background:#f0f9fc;
+}
+.page{
+  display:none;
+  padding-bottom:85px;
+}
+.active-page{
+  display:block;
+}
+
+/* MODAL */
+.modal{
+  display:none;
+  position:fixed;
+  top:0;left:0;width:100%;height:100%;
+  background:rgba(0,0,0,0.4);
+  justify-content:center;
+  align-items:center;
+  z-index:99;
+}
+.modal-content{
+  background:white;
+  padding:25px;
+  border-radius:32px;
+  width:90%;
+  max-width:380px;
+  box-shadow:0 30px 40px rgba(0,0,0,0.2);
+}
+.modal input{
+  width:100%;
+  padding:14px;
+  margin:10px 0;
+  border:none;
+  border-radius:20px;
+  background:#f0f3f6;
+  font-family:'Poppins';
+  outline:none;
+}
+.modal button{
+  border:none;
+  padding:10px 18px;
+  border-radius:40px;
+  font-weight:500;
+  margin-right:8px;
+  cursor:pointer;
+}
+#loginInfo{
+  font-size:0.85rem;
+  margin-top:12px;
+  color:#c44545;
+}
+</style>
+</head>
+<body>
+
+<!-- BERANDA (grid 2→4) -->
+<div id="home" class="page active-page">
+  <div class="header">
+    <span>🏠 Beranda</span>
+    <div id="headerUser"></div>
+  </div>
+  <div id="homeList" class="card-grid"></div>
+</div>
+
+<!-- MANDIRI (layout horizontal) -->
+<div id="mandiri" class="page">
+  <div class="header">
+    <span>📚 Koleksi Mandiri</span>
+    <div id="headerUser2"></div>
+  </div>
+  <div id="mandiriList" class="mandiri-grid"></div>
+</div>
+
+<!-- MEMBER (daftar member) -->
+<div id="member" class="page">
+  <div class="header">
+    <span>👥 Member Aktif</span>
+    <div id="headerUser3"></div>
+  </div>
+
+  <div id="memberList" class="member-grid">
+    <!-- akan diisi dari javascript -->
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <div onclick="showPage('home')">Beranda</div>
+  <div onclick="showPage('mandiri')">Mandiri</div>
+  <div onclick="showPage('member')">Member</div>
+</div>
+
+<!-- LOGIN MODAL -->
+<div id="loginModal" class="modal">
+  <div class="modal-content">
+    <h3 style="margin-top:0;">🔐 Login Member</h3>
+    <input id="userInput" placeholder="Username">
+    <input id="passInput" type="password" placeholder="Password">
+    <div style="display:flex; gap:8px;">
+      <button class="mini-btn" onclick="login()" style="flex:1;">Login</button>
+      <button onclick="closeLogin()" style="background:#eee;">Tutup</button>
+    </div>
+    <p id="loginInfo"></p>
+  </div>
+</div>
+
+<script>
+const sheetID = "1wZ2FcazGPDNKXxqVbML99pczrW_Y7gENBMhiF5BfcHk";
+
+/* NAVIGASI */
+function showPage(id){
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active-page"));
+  document.getElementById(id).classList.add("active-page");
+}
+
+/* RENDER HEADER USER (login status) */
+function renderHeader(){
+  const user = JSON.parse(localStorage.getItem("userLogin"));
+  let html;
+  if(user){
+    html = `
+      <div class="header-user">
+        <button class="mini-btn" onclick="unggah()">➕ Unggah</button>
+        <button class="mini-btn" onclick="logout()">🚪 Keluar</button>
+        <img src="${user.foto}" onerror="this.src='https://picsum.photos/100?random'">
+      </div>`;
+  }else{
+    html = `<button class="login-btn" onclick="openLogin()">🔑 Login</button>`;
+  }
+  document.getElementById("headerUser").innerHTML = html;
+  document.getElementById("headerUser2").innerHTML = html;
+  document.getElementById("headerUser3").innerHTML = html;
+}
+
+/* MODAL LOGIN */
+function openLogin(){ document.getElementById("loginModal").style.display = "flex"; }
+function closeLogin(){ document.getElementById("loginModal").style.display = "none"; }
+
+/* LOGIN */
+function login(){
+  const user = document.getElementById("userInput").value;
+  const pass = document.getElementById("passInput").value;
+  const loginInfo = document.getElementById("loginInfo");
+
+  fetch(`https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?sheet=akun&tq=${
+    encodeURIComponent(`select * where A='${user}' and B='${pass}'`)
+  }`)
+  .then(res => res.text())
+  .then(rep => {
+    const json = JSON.parse(rep.substring(47).slice(0,-2));
+    const rows = json.table.rows;
+    if(rows.length > 0){
+      localStorage.setItem("userLogin", JSON.stringify({
+        username: rows[0].c[0].v,
+        foto: rows[0].c[3]?.v || 'https://picsum.photos/100?seed='+rows[0].c[0].v
+      }));
+      renderHeader();
+      closeLogin();
+    }else{
+      loginInfo.innerText = "❌ Username atau password salah";
+    }
+  }).catch(() => loginInfo.innerText = "Gagal terhubung");
+}
+
+function logout(){
+  localStorage.removeItem("userLogin");
+  renderHeader();
+}
+
+/* UNGGAH (demo) */
+function unggah(){
+  alert("Fitur unggah karya (demo) — terima kasih");
+}
+
+/* ========== FETCH DATA ========== */
+// BERANDA (dashboard) dengan grid
+fetch(`https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?sheet=Dashboard&tq=${
+  encodeURIComponent("select B,C,D where B is not null")
+}`)
+.then(res => res.text())
+.then(rep => {
+  const json = JSON.parse(rep.substring(47).slice(0,-2));
+  const rows = json.table.rows;
+  let htmlCards = '';
+  rows.forEach(r => {
+    const judul = r.c[0]?.v || 'Judul';
+    const gambar = r.c[1]?.v || 'https://picsum.photos/300/200?random='+Math.random();
+    const desk = r.c[2]?.v || 'Deskripsi singkat';
+    htmlCards += `
+      <div class="card">
+        <img src="${gambar}" loading="lazy">
+        <h3>${judul}</h3>
+        <p class="small">${desk}</p>
+      </div>
+    `;
+  });
+  document.getElementById("homeList").innerHTML = htmlCards;
+})
+.catch(() => document.getElementById("homeList").innerHTML = '<p style="padding:20px;">Gagal memuat beranda</p>');
+
+// MANDIRI (galery) dengan layout horizontal (gambar kiri, judul & deskripsi kanan)
+fetch(`https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?sheet=galery&tq=${
+  encodeURIComponent("select B,C,D where B is not null")
+}`)
+.then(res => res.text())
+.then(rep => {
+  const json = JSON.parse(rep.substring(47).slice(0,-2));
+  const rows = json.table.rows;
+  let htmlMandiri = '';
+  rows.forEach(r => {
+    const gambar = r.c[0]?.v || 'https://picsum.photos/120/120?random='+Math.random();
+    const judul = r.c[1]?.v || 'Koleksi Mandiri';
+    const desk = r.c[2]?.v || 'Deskripsi karya / materi pembelajaran.';
+    htmlMandiri += `
+      <div class="mandiri-card">
+        <img src="${gambar}" loading="lazy">
+        <div class="mandiri-content">
+          <h4>${judul}</h4>
+          <p>${desk}</p>
+        </div>
+      </div>
+    `;
+  });
+  document.getElementById("mandiriList").innerHTML = htmlMandiri;
+})
+.catch(() => document.getElementById("mandiriList").innerHTML = '<p style="padding:20px;">Gagal memuat galeri</p>');
+
+// MEMBER : daftar member dari sheet 'akun' (atau dummy jika kosong)
+fetch(`https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?sheet=akun&tq=${
+  encodeURIComponent("select A, C, D where A is not null")
+}`)
+.then(res => res.text())
+.then(rep => {
+  const json = JSON.parse(rep.substring(47).slice(0,-2));
+  const rows = json.table.rows;
+  let memberHtml = '';
+  if(rows.length > 0){
+    rows.forEach((r, idx) => {
+      const username = r.c[0]?.v || 'user'+idx;
+      const peran = r.c[1]?.v || 'Member';
+      const foto = r.c[2]?.v || 'https://picsum.photos/80/80?random='+idx;
+      memberHtml += `
+        <div class="member-row">
+          <img class="member-avatar" src="${foto}" onerror="this.src='https://picsum.photos/80/80?random='+${idx}">
+          <div class="member-info">
+            <div class="member-name">@${username}</div>
+            <span class="member-badge">${peran}</span>
+          </div>
+        </div>
+      `;
+    });
+  } else {
+    // data dummy jika sheet kosong
+    const dummy = [
+      {nama:"andi", role:"Guru", foto:"https://picsum.photos/80?1"},
+      {nama:"budi", role:"Siswa", foto:"https://picsum.photos/80?2"},
+      {nama:"citra", role:"Kontributor", foto:"https://picsum.photos/80?3"},
+      {nama:"dian", role:"Member", foto:"https://picsum.photos/80?4"},
+      {nama:"eka", role:"Guru", foto:"https://picsum.photos/80?5"},
+    ];
+    dummy.forEach(d => {
+      memberHtml += `
+        <div class="member-row">
+          <img class="member-avatar" src="${d.foto}">
+          <div class="member-info">
+            <div class="member-name">@${d.nama}</div>
+            <span class="member-badge">${d.role}</span>
+          </div>
+        </div>
+      `;
+    });
+  }
+  document.getElementById("memberList").innerHTML = memberHtml;
+})
+.catch(() => {
+  // fallback member
+  document.getElementById("memberList").innerHTML = `
+    <div class="member-row"><img class="member-avatar" src="https://picsum.photos/80?11"><div class="member-info"><div class="member-name">@andi</div><span class="member-badge">Guru</span></div></div>
+    <div class="member-row"><img class="member-avatar" src="https://picsum.photos/80?12"><div class="member-info"><div class="member-name">@budi</div><span class="member-badge">Siswa</span></div></div>
+    <div class="member-row"><img class="member-avatar" src="https://picsum.photos/80?13"><div class="member-info"><div class="member-name">@citra</div><span class="member-badge">Kontributor</span></div></div>
+  `;
+});
+
+// INITIAL HEADER
+renderHeader();
+</script>
+</body>
+</html>
