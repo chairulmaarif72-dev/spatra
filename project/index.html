@@ -1,0 +1,631 @@
+ <!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎓 Kuis Kesiapan Masa Depan: Kerja & Kuliah</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(145deg, #e8eef7 0%, #dbe3f0 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .kuis-container {
+            max-width: 1000px;
+            width: 100%;
+            background: rgba(255,255,255,0.85);
+            backdrop-filter: blur(12px);
+            border-radius: 48px;
+            padding: 30px;
+            box-shadow: 0 40px 70px -25px #132b44;
+            border: 1px solid rgba(255,255,255,0.7);
+        }
+
+        /* header */
+        .header-kuis {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header-kuis h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, #13294b, #274e7c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+
+        .header-kuis p {
+            font-size: 1.2rem;
+            color: #26425e;
+            background: #ffffffb3;
+            display: inline-block;
+            padding: 8px 32px;
+            border-radius: 60px;
+            backdrop-filter: blur(4px);
+        }
+
+        /* navigasi angka + legend */
+        .nav-section {
+            background: white;
+            border-radius: 40px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 20px -10px #6582a3;
+        }
+
+        .legend-grid {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .legend {
+            display: flex;
+            gap: 25px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-badge {
+            width: 20px;
+            height: 20px;
+            border-radius: 20px;
+        }
+        .green-badge { background: #2ecc71; box-shadow: 0 0 0 3px #d0f0da; }
+        .red-badge { background: #e74c3c; box-shadow: 0 0 0 3px #fadbd8; }
+        .active-badge { 
+            width: 28px; 
+            height: 28px; 
+            border-radius: 28px; 
+            background: #1e2b4f; 
+            color: white;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+
+        .angka-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            background: #f2f7ff;
+            padding: 18px;
+            border-radius: 38px;
+        }
+
+        .num-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 48px;
+            border: 2px solid #cddef7;
+            background: white;
+            font-weight: 700;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .num-btn.completed {
+            background: #2ecc71;
+            border-color: #2ecc71;
+            color: white;
+        }
+
+        .num-btn.active {
+            border-color: #1e2b4f;
+            background: #1e2b4f;
+            color: white;
+            transform: scale(1.1);
+            box-shadow: 0 8px 15px -6px #0a1a33;
+        }
+
+        .num-btn.completed.active {
+            background: #1e2b4f;
+            border-color: #1e2b4f;
+            color: white;
+        }
+
+        .num-btn:not(.completed) {
+            background: white;
+            color: #e74c3c;
+            border-color: #e74c3c;
+        }
+
+        /* slide area */
+        .slide-card {
+            background: white;
+            border-radius: 36px;
+            padding: 30px;
+            margin-bottom: 25px;
+            border: 2px solid #ffffff;
+            box-shadow: 0 20px 30px -18px #2d4b6e;
+        }
+
+        .domain-pill {
+            background: #13294b;
+            color: white;
+            padding: 6px 22px;
+            border-radius: 60px;
+            display: inline-block;
+            font-weight: 600;
+            margin-bottom: 20px;
+            letter-spacing: 0.3px;
+        }
+
+        .soal-text {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #0e263b;
+            margin-bottom: 30px;
+            line-height: 1.35;
+        }
+
+        /* opsi */
+        .opsi-container {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .opsi-item {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            background: #f5faff;
+            border-radius: 100px;
+            padding: 14px 25px;
+            border: 2px solid #d4e2f5;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .opsi-item:hover {
+            border-color: #8fb4e2;
+            background: #ecf3fe;
+        }
+
+        .opsi-item.selected {
+            border-color: #2ecc71;
+            background: #e1f7e8;
+            box-shadow: 0 0 0 5px #d5f0dd;
+        }
+
+        .opsi-item input[type="radio"] {
+            appearance: none;
+            width: 26px;
+            height: 26px;
+            border: 2px solid #a6c1e3;
+            border-radius: 26px;
+            margin: 0;
+            transition: 0.1s;
+        }
+
+        .opsi-item input[type="radio"]:checked {
+            border-color: #2ecc71;
+            background: #2ecc71;
+            box-shadow: inset 0 0 0 6px white, 0 0 0 2px #2ecc71;
+        }
+
+        .opsi-item label {
+            flex: 1;
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #1f3d5a;
+            cursor: pointer;
+        }
+
+        /* navigasi prev/next */
+        .nav-bawah {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+            flex-wrap: wrap;
+        }
+
+        .nav-btn {
+            background: white;
+            border: 2px solid #c6d9f0;
+            padding: 14px 30px;
+            border-radius: 60px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: #13294b;
+            cursor: pointer;
+            flex: 1;
+            transition: 0.15s;
+        }
+
+        .nav-btn:hover:not(:disabled) {
+            background: #13294b;
+            border-color: #13294b;
+            color: white;
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .btn-hasil {
+            background: #13294b;
+            border: none;
+            color: white;
+            padding: 14px 35px;
+            border-radius: 60px;
+            font-weight: 700;
+            font-size: 1.2rem;
+            cursor: pointer;
+            box-shadow: 0 15px 25px -12px #0f2642;
+            flex: 0.7;
+            border: 1px solid #ffffff60;
+        }
+
+        /* hasil panel */
+        .hasil-panel {
+            background: #ffffffdb;
+            backdrop-filter: blur(8px);
+            border-radius: 40px;
+            padding: 30px;
+            margin-top: 30px;
+            border: 1px solid white;
+        }
+
+        .rekom-card {
+            padding: 25px;
+            border-radius: 30px;
+            margin-top: 20px;
+        }
+        .rekom-tinggi { background: #e1f5e8; border-left: 12px solid #1f8b4c; }
+        .rekom-sedang { background: #fff1db; border-left: 12px solid #c8811a; }
+        .rekom-rendah { background: #ffe9e6; border-left: 12px solid #c0392b; }
+
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="kuis-container">
+    <div class="header-kuis">
+        <h1>🧭 navigasi masa depan</h1>
+        <p>30 soal · kerja · kuliah · mental siap</p>
+    </div>
+
+    <!-- navigasi angka + legend -->
+    <div class="nav-section">
+        <div class="legend-grid">
+            <div class="legend">
+                <span class="legend-item"><span class="legend-badge green-badge"></span> sudah</span>
+                <span class="legend-item"><span class="legend-badge red-badge"></span> belum</span>
+            </div>
+            <div class="legend-item">
+                <span class="active-badge">1</span> <span style="margin-left:5px;">sedang</span>
+            </div>
+        </div>
+        <div class="angka-grid" id="gridAngka"></div>
+    </div>
+
+    <!-- slide soal -->
+    <div id="slideSoal"></div>
+
+    <!-- tombol navigasi bawah & hasil -->
+    <div class="nav-bawah">
+        <button class="nav-btn" id="prevSoal" disabled>← sebelumnya</button>
+        <button class="nav-btn" id="nextSoal">selanjutnya →</button>
+        <button class="btn-hasil" id="tombolHasil">🔍 lihat hasil & tindak lanjut</button>
+    </div>
+
+    <!-- hasil analisis -->
+    <div id="areaHasil" class="hasil-panel hidden"></div>
+</div>
+
+<script>
+(function() {
+    // ===================== 30 SOAL BARU =====================
+    const soal30 = [
+        // Mental & Percaya Diri (1-6)
+        "Saya yakin bisa bersaing di dunia kerja atau perkuliahan.",
+        "Saya mampu menghadapi penolakan (lamaran ditolak / tidak diterima di PTN).",
+        "Saya berani mengungkapkan pendapat dalam diskusi kelompok.",
+        "Saya tidak mudah menyerah saat menghadapi kegagalan.",
+        "Saya percaya diri saat wawancara atau presentasi.",
+        "Saya mampu mengelola stres ketika tekanan datang.",
+
+        // Perilaku & Kebiasaan (7-12)
+        "Saya terbiasa datang tepat waktu dalam setiap kegiatan.",
+        "Saya mampu bekerja sama dalam tim dengan berbagai karakter orang.",
+        "Saya aktif mencari informasi tentang karier atau kampus impian.",
+        "Saya memiliki kebiasaan belajar atau mengasah skill secara rutin.",
+        "Saya berani mengambil tanggung jawab lebih (organisasi/panitia).",
+        "Saya bisa mengatur prioritas antara tugas, organisasi, dan istirahat.",
+
+        // Kesiapan Akademik/Non-akademik (13-18)
+        "Saya sudah memiliki portofolio atau catatan prestasi (akademik/non).",
+        "Saya mengenali minat dan bakat yang ingin saya kembangkan.",
+        "Saya paham langkah-langkah melamar kerja atau mendaftar kuliah.",
+        "Saya terbiasa membuat target jangka pendek dan mengevaluasinya.",
+        "Saya mampu belajar hal baru secara mandiri (online/book).",
+        "Saya memiliki kemampuan dasar komputer atau bahasa asing.",
+
+        // Sikap & Etika (19-24)
+        "Saya menjaga nama baik di media sosial.",
+        "Saya mampu menerima kritik dan memperbaiki diri.",
+        "Saya berani meminta maaf jika melakukan kesalahan.",
+        "Saya menghormati atasan/dosen dan rekan.",
+        "Saya bersikap profesional meskipun dalam situasi informal.",
+        "Saya bertanggung jawab terhadap tugas yang diberikan.",
+
+        // Perencanaan Masa Depan (25-30)
+        "Saya sudah memiliki gambaran karier atau jurusan kuliah.",
+        "Saya tahu cara membuat CV atau portofolio sederhana.",
+        "Saya pernah mengikuti pelatihan / seminar pengembangan diri.",
+        "Saya memiliki rencana cadangan jika rencana utama gagal.",
+        "Saya mulai menabung atau merencanakan keuangan untuk masa depan.",
+        "Saya memiliki mentor / role model yang bisa diajak diskusi."
+    ];
+
+    // Domain untuk 30 soal (dikelompokkan biar variatif)
+    const domain30 = {
+        "🧠 Mental Tangguh": [0,1,2,3,4,5],           // 6 soal
+        "📋 Perilaku & Kebiasaan": [6,7,8,9,10,11],    // 6 soal
+        "📚 Kesiapan Akademik": [12,13,14,15,16,17],    // 6 soal
+        "🤝 Sikap & Etika": [18,19,20,21,22,23],       // 6 soal
+        "🎯 Perencanaan Masa Depan": [24,25,26,27,28,29] // 6 soal
+    };
+
+    const opsi = [
+        "🫣 tidak sesuai saya",
+        "🤔 kadang-kadang",
+        "🙂 cukup sering",
+        "😌 sering, hampir selalu",
+        "🚀 sangat sesuai, selalu"
+    ];
+
+    const totalSoal = soal30.length; // 30
+    let jawaban = new Array(totalSoal).fill(null);
+    let currentIndex = 0;
+
+    // elemen
+    const gridAngka = document.getElementById('gridAngka');
+    const slideSoal = document.getElementById('slideSoal');
+    const prevSoal = document.getElementById('prevSoal');
+    const nextSoal = document.getElementById('nextSoal');
+    const tombolHasil = document.getElementById('tombolHasil');
+    const areaHasil = document.getElementById('areaHasil');
+
+    // render grid nomor
+    function renderGrid() {
+        let html = '';
+        for (let i = 0; i < totalSoal; i++) {
+            const nomor = i + 1;
+            const completed = jawaban[i] !== null;
+            const active = (i === currentIndex);
+            let kelas = 'num-btn';
+            if (completed) kelas += ' completed';
+            if (active) kelas += ' active';
+            html += `<button class="${kelas}" data-index="${i}">${nomor}</button>`;
+        }
+        gridAngka.innerHTML = html;
+
+        document.querySelectorAll('.num-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const idx = parseInt(btn.dataset.index);
+                if (!isNaN(idx) && idx >= 0 && idx < totalSoal) {
+                    currentIndex = idx;
+                    renderSlide();
+                    renderGrid();
+                }
+            });
+        });
+    }
+
+    // render slide berdasarkan currentIndex
+    function renderSlide() {
+        const idx = currentIndex;
+        const teksSoal = soal30[idx];
+
+        // cari domain
+        let domain = '';
+        for (let d in domain30) {
+            if (domain30[d].includes(idx)) {
+                domain = d;
+                break;
+            }
+        }
+
+        const selected = jawaban[idx];
+
+        let html = `
+            <div class="slide-card">
+                <div class="domain-pill">${domain}</div>
+                <div class="soal-text">${teksSoal}</div>
+                <div class="opsi-container" id="opsiSlide">
+        `;
+
+        opsi.forEach((opt, optIdx) => {
+            const optVal = optIdx + 1;
+            const checked = (selected === optVal) ? 'checked' : '';
+            const selectedClass = (selected === optVal) ? 'selected' : '';
+            html += `
+                <div class="opsi-item ${selectedClass}" data-value="${optVal}">
+                    <input type="radio" name="radioSlide" value="${optVal}" id="opt_${idx}_${optIdx}" ${checked}>
+                    <label for="opt_${idx}_${optIdx}">${opt}</label>
+                </div>
+            `;
+        });
+
+        html += `</div></div>`;
+        slideSoal.innerHTML = html;
+
+        // event listener
+        document.querySelectorAll('.opsi-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const radio = this.querySelector('input[type="radio"]');
+                if (radio) {
+                    radio.checked = true;
+                    radio.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            });
+        });
+
+        document.querySelectorAll('input[name="radioSlide"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                const val = parseInt(e.target.value);
+                jawaban[idx] = val;
+
+                // update class
+                document.querySelectorAll('.opsi-item').forEach(opt => opt.classList.remove('selected'));
+                e.target.closest('.opsi-item').classList.add('selected');
+
+                renderGrid(); // update warna grid
+                updateNavButtons();
+            });
+        });
+
+        updateNavButtons();
+    }
+
+    function updateNavButtons() {
+        prevSoal.disabled = (currentIndex === 0);
+        nextSoal.disabled = (currentIndex === totalSoal - 1);
+    }
+
+    // navigasi
+    prevSoal.addEventListener('click', () => {
+        if (currentIndex > 0) {
+            currentIndex--;
+            renderSlide();
+            renderGrid();
+        }
+    });
+
+    nextSoal.addEventListener('click', () => {
+        if (currentIndex < totalSoal - 1) {
+            currentIndex++;
+            renderSlide();
+            renderGrid();
+        }
+    });
+
+    // ================== ANALISIS HASIL + TINDAK LANJUT ==================
+    tombolHasil.addEventListener('click', () => {
+        // validasi semua terjawab
+        const belum = jawaban.reduce((acc, val, idx) => val === null ? acc.concat(idx+1) : acc, []);
+        if (belum.length > 0) {
+            alert(`Masih ada ${belum.length} soal belum dijawab: nomor ${belum.join(', ')}. Lengkapi dulu yuk!`);
+            return;
+        }
+
+        // hitung skor per domain (total per domain = 6 soal * 5 = 30)
+        let skorDomain = {};
+        let totalKeseluruhan = 0;
+        for (let d in domain30) {
+            skorDomain[d] = 0;
+            domain30[d].forEach(i => {
+                skorDomain[d] += jawaban[i];
+            });
+            totalKeseluruhan += skorDomain[d];
+        }
+
+        // max total = 30*5 = 150
+        const persen = (totalKeseluruhan / 150) * 100;
+
+        // tentukan profil dan rekomendasi + tindak lanjut
+        let profil, warnaRekom, rekomendasi, tindakLanjut;
+
+        if (persen >= 80) {
+            profil = "🔥 SANGAT SIAP";
+            warnaRekom = "rekom-tinggi";
+            rekomendasi = "Kesiapan mental dan perilaku kamu sangat baik untuk menghadapi masa depan.";
+            tindakLanjut = "➡️ Tindak lanjut: Mulai bangun portofolio nyata, cari magang atau proyek kecil, asah skill wawancara, dan perluas jaringan profesional.";
+        } else if (persen >= 60) {
+            profil = "🌱 CUKUP SIAP, TINGKATKAN";
+            warnaRekom = "rekom-sedang";
+            rekomendasi = "Kamu sudah punya fondasi, tapi masih perlu penguatan di beberapa area.";
+            tindakLanjut = "➡️ Tindak lanjut: Fokus pada domain dengan skor terendah. Ikut pelatihan soft skill, cari mentor, perbanyak latihan soal wawancara atau public speaking.";
+        } else if (persen >= 40) {
+            profil = "🌿 SIAP, TAPI BUTUH PENGUATAN";
+            warnaRekom = "rekom-sedang";
+            rekomendasi = "Kesiapan cukup, namun ada beberapa aspek yang perlu diasah lebih dalam.";
+            tindakLanjut = "➡️ Tindak lanjut: Identifikasi 2-3 domain terlemah. Cari kursus singkat, ikut organisasi, praktik disiplin, dan buat rencana harian.";
+        } else {
+            profil = "🫂 BUTUH PERSIAPAN INTENSIF";
+            warnaRekom = "rekom-rendah";
+            rekomendasi = "Kamu masih butuh banyak persiapan, tapi ini bisa dilatih.";
+            tindakLanjut = "➡️ Tindak lanjut: Mulai dari hal kecil: rutinitas belajar, bergabung dengan komunitas positif, konsultasi dengan guru BK/dosen, ikut webinar motivasi, dan buat target mingguan.";
+        }
+
+        // tampilkan hasil
+        let output = `<h2 style="margin-bottom:20px;">📈 analisis kesiapan dirimu</h2>`;
+
+        // tabel skor per domain
+        for (let d in skorDomain) {
+            const max = 30;
+            const skor = skorDomain[d];
+            const persenDomain = (skor / max) * 100;
+            let barColor = '#2ecc71';
+            if (persenDomain < 50) barColor = '#e74c3c';
+            else if (persenDomain < 70) barColor = '#f39c12';
+
+            output += `
+                <div style="margin-bottom:20px;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                        <span style="font-weight:600;">${d}</span>
+                        <span>${skor}/${max}</span>
+                    </div>
+                    <div style="background:#e2eaf5; height:16px; border-radius:20px; overflow:hidden;">
+                        <div style="height:100%; width:${persenDomain}%; background:${barColor}; border-radius:20px;"></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        output += `<div style="font-size:2rem; text-align:center; margin:30px 0 20px;">✨ skor total: ${totalKeseluruhan}/150 (${Math.round(persen)}%)</div>`;
+
+        output += `
+            <div class="rekom-card ${warnaRekom}">
+                <h3 style="font-size:1.9rem; margin-bottom:15px;">${profil}</h3>
+                <p style="font-size:1.2rem; margin-bottom:15px;">${rekomendasi}</p>
+                <div style="background:white; padding:20px; border-radius:28px; margin-top:15px;">
+                    <strong>📌 rekomendasi tindak lanjut:</strong>
+                    <p style="margin-top:12px; font-size:1.1rem;">${tindakLanjut}</p>
+                </div>
+            </div>
+        `;
+
+        areaHasil.innerHTML = output;
+        areaHasil.classList.remove('hidden');
+        areaHasil.scrollIntoView({ behavior: 'smooth' });
+    });
+
+    // inisialisasi
+    renderGrid();
+    renderSlide();
+})();
+</script>
+
+</body>
+</html>
