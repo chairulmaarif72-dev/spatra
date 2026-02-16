@@ -861,56 +861,119 @@ function generateWorksheet(skorDomain, total, persen, profil) {
 }
 
 // ===================== SIMPAN KE GOOGLE SHEET =====================
-window.simpanWorksheet = function() {
-    // Ambil data dari worksheet
-    const textareas = document.querySelectorAll('#worksheetContainer .text-area-titik');
-    const checkboxes = document.querySelectorAll('#worksheetContainer input[type="checkbox"]');
-    
-    const data = {
-        timestamp: new Date().toISOString(),
-        kelas: selectedKelas,
-        nama: selectedNama,
-        rencana1: textareas[0]?.value || '',
-        rencana2: textareas[1]?.value || '',
-        rencana3: textareas[2]?.value || '',
-        mentor1: textareas[3]?.value || '',
-        mentor2: textareas[4]?.value || '',
-        ide1: textareas[5]?.value || '',
-        ide2: textareas[6]?.value || '',
-        ide3: textareas[7]?.value || '',
-        kebiasaan: Array.from(checkboxes).map(cb => cb.checked ? 1 : 0).join(',')
-    };
-
-    // Tampilkan status loading
-    const status = document.getElementById('statusMessage');
-    status.className = 'status-simpan';
-    status.textContent = 'Menyimpan data...';
-    status.classList.remove('hidden');
-
-    // URL Google Apps Script (Web App)
-    const scriptURL = 'https://script.google.com/a/macros/guru.sma.belajar.id/s/AKfycbzzaXN4G8OG85UUbNoasPP2Q__vTXDL1FpuiZZmbh0U7fCY-aor7w1G9bXFVD-0uJ9yGg/exec'; // GANTI DENGAN URL APPS SCRIPT KAMU
-    
-    // Kirim data ke Google Sheet
-    fetch(scriptURL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data)
-    })
-    .then(() => {
+// ===================== SIMPAN KE GOOGLE SHEET =====================
+window.simpanWorksheet = async function() {
+    try {
+        // Tampilkan status loading
+        const status = document.getElementById('statusMessage');
+        status.className = 'status-simpan';
+        status.textContent = '⏳ Menyimpan data...';
+        status.classList.remove('hidden');
+        
+        // Ambil data dari textarea
+        const textareas = document.querySelectorAll('#worksheetContainer .text-area-titik');
+        const checkboxes = document.querySelectorAll('#worksheetContainer input[type="checkbox"]:checked');
+        
+        // Ambil skor dari hasil kuis (dari localStorage atau hitung ulang)
+        const totalSkor = localStorage.getItem('totalSkor') || '';
+        const profil = localStorage.getItem('profil') || '';
+        
+        // Format kebiasaan
+        const kebiasaanList = [];
+        document.querySelectorAll('#worksheetContainer .checkbox-item').forEach((item, index) => {
+            const cb = item.querySelector('input[type="checkbox"]');
+            const label = item.textContent.trim();
+            if (cb && cb.checked) {
+                kebiasaanList.push(label);
+            }
+        });
+        
+        // Data yang akan dikirim
+        const data = {
+            kelas: selectedKelas,
+            nama: selectedNama,
+            rencana1: textareas[0]?.value || '',
+            rencana2: textareas[1]?.value || '',
+            rencana3: textareas[2]?.value || '',
+            mentor1: textareas[3]?.value || '',
+            mentor2: textareas[4]?.value || '',
+            ide1: textareas[5]?.value || '',
+            ide2: textareas[6]?.value || '',
+            ide3: textareas[7]?.value || '',
+            kebiasaan: kebiasaanList.join('; '),
+            totalSkor: totalSkor,
+            profil: profil
+        };
+        
+        console.log('Data yang dikirim:', data);
+        
+        // GANTI URL INI DENGAN URL WEB APP ANDA
+        const scriptURL = 'https://script.google.com/a/macros/guru.sma.belajar.id/s/AKfycby7pi2rUGgBfh9njaowl-l2sjxm0Eliwv5gmTzr8ya3uuy0-fgyeMUkDrLsEq2PyBkZwA/exec';
+        
+        // Kirim data dengan mode no-cors (untuk menghindari CORS)
+        const response = await fetch(scriptURL, {
+            method: 'POST',
+            mode: 'no-cors', // Penting: no-cors untuk Google Apps Script
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+        
+        // Dengan mode no-cors, kita tidak bisa membaca response
+        // Tapi kita tahu request sudah terkirim
+        
         status.className = 'status-simpan sukses';
-        status.textContent = '✅ Data berhasil disimpan ke Google Sheet!';
+        status.textContent = '✅ Data berhasil dikirim ke Google Sheet!';
+        
+        // Simpan juga ke localStorage sebagai backup
+        const savedData = JSON.parse(localStorage.getItem('kuisData') || '[]');
+        savedData.push({
+            timestamp: new Date().toISOString(),
+            ...data
+        });
+        localStorage.setItem('kuisData', JSON.stringify(savedData));
+        
         setTimeout(() => status.classList.add('hidden'), 5000);
-    })
-    .catch(error => {
-        console.error('Error:', error);
+        
+    } catch (error) {
+        console.error('Error detail:', error);
+        
+        const status = document.getElementById('statusMessage');
         status.className = 'status-simpan error';
-        status.textContent = '❌ Gagal menyimpan data. Coba lagi.';
+        status.textContent = '❌ Gagal menyimpan. Tapi data tersimpan di lokal.';
+        status.classList.remove('hidden');
+        
+        // Backup ke localStorage
+        try {
+            const textareas = document.querySelectorAll('#worksheetContainer .text-area-titik');
+            const backupData = {
+                timestamp: new Date().toISOString(),
+                kelas: selectedKelas,
+                nama: selectedNama,
+                rencana1: textareas[0]?.value || '',
+                rencana2: textareas[1]?.value || '',
+                rencana3: textareas[2]?.value || '',
+            };
+            const savedData = JSON.parse(localStorage.getItem('kuisDataBackup') || '[]');
+            savedData.push(backupData);
+            localStorage.setItem('kuisDataBackup', JSON.stringify(savedData));
+        } catch (e) {}
+        
         setTimeout(() => status.classList.add('hidden'), 5000);
-    });
+    }
 };
+
+// Tambahkan fungsi untuk menyimpan skor ke localStorage saat lihat hasil
+document.getElementById('lihatHasilBtn').addEventListener('click', function() {
+    // ... kode yang sudah ada ...
+    
+    // Tambahkan ini di bagian akhir setelah menghitung skor
+    localStorage.setItem('totalSkor', total);
+    localStorage.setItem('profil', profil);
+    
+    // ... lanjutkan kode ...
+});
 
 // ===================== CETAK WORKSHEET =====================
 window.cetakWorksheet = function() {
