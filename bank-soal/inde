@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Bank Soal Generator</title>
+<style>
+body { font-family: Arial; padding: 20px; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ccc; padding: 8px; }
+button { padding: 10px 20px; margin-top: 15px; }
+</style>
+</head>
+<body>
+
+<h2>Bank Soal</h2>
+
+Nama Google Form:
+<input type="text" id="namaForm" placeholder="Contoh: Ujian Matematika">
+<br><br>
+
+<table id="tabel">
+<thead>
+<tr>
+<th>Pilih</th>
+<th>No</th>
+<th>Soal</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+
+<button onclick="generate()">Generate Google Form</button>
+
+<script>
+
+const API = "https://script.google.com/macros/s/AKfycbwF9wNFTtRIM8nW_p6m-4EU8CeD-Y5iiBCImVQqRuhSX42D-OXJ2qOQ1xDq9_v6_7hXrA/exec";
+
+fetch(API + "?action=getSoal")
+.then(res => res.json())
+.then(data => {
+  let html = "";
+  data.forEach(item => {
+    html += `
+      <tr>
+        <td><input type="checkbox" value="${item.index}"></td>
+        <td>${item.no}</td>
+        <td>${item.soal}</td>
+      </tr>
+    `;
+  });
+  document.querySelector("#tabel tbody").innerHTML = html;
+});
+
+function generate() {
+
+  const namaForm = document.getElementById("namaForm").value;
+  if (!namaForm) {
+    alert("Isi nama form dulu!");
+    return;
+  }
+
+  const checked = document.querySelectorAll("input[type=checkbox]:checked");
+  if (checked.length === 0) {
+    alert("Pilih minimal 1 soal!");
+    return;
+  }
+
+  const selected = [];
+  checked.forEach(cb => selected.push(parseInt(cb.value)));
+
+  fetch(API + "?action=generateForm&namaForm=" 
+        + encodeURIComponent(namaForm) 
+        + "&selected=" + encodeURIComponent(JSON.stringify(selected)))
+  .then(res => res.json())
+  .then(data => {
+    if (data.status === "success") {
+      window.open(data.url, "_blank");
+    }
+  });
+}
+
+</script>
+
+</body>
+</html>
