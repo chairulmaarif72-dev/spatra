@@ -2,35 +2,13 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Bank Soal Generator</title>
+<title>Bank Soal Generator (GVIZ)</title>
 
 <style>
 body {
-  font-family: Arial, sans-serif;
+  font-family: Arial;
   padding: 20px;
   background: #f4f6f9;
-}
-
-h2 {
-  margin-bottom: 10px;
-}
-
-input[type=text] {
-  padding: 8px;
-  width: 300px;
-}
-
-button {
-  padding: 10px 20px;
-  background: #1a73e8;
-  color: white;
-  border: none;
-  cursor: pointer;
-  border-radius: 4px;
-}
-
-button:hover {
-  background: #0c5bd3;
 }
 
 table {
@@ -49,6 +27,24 @@ th {
   background: #f1f3f4;
 }
 
+button {
+  padding: 10px 20px;
+  background: #1a73e8;
+  color: white;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+button:hover {
+  background: #0c5bd3;
+}
+
+input[type=text] {
+  padding: 8px;
+  width: 300px;
+}
+
 #loading {
   color: red;
   margin-top: 10px;
@@ -58,10 +54,10 @@ th {
 
 <body>
 
-<h2>Bank Soal - Generate Form & Document</h2>
+<h2>Bank Soal (GVIZ)</h2>
 
 <label>Nama File (Form & Doc):</label><br>
-<input type="text" id="namaFile" placeholder="Contoh: Ujian Matematika Kelas 9">
+<input type="text" id="namaFile" placeholder="Contoh: Ujian Matematika">
 <br><br>
 
 <button onclick="generate()">Generate Sekarang</button>
@@ -83,26 +79,62 @@ th {
 
 <script>
 
-const API = "https://script.google.com/macros/s/AKfycbzP7fg0aEAnFhftYzUP7l1zxZra5of-2jbJetnxFId_11CUfweuC41vE5mxd4JlxyJL4w/exec";
-
 // =======================
-// LOAD BANK SOAL
+// GANTI INI
 // =======================
 
-fetch(API + "?action=getSoal")
-.then(response => response.json())
-.then(data => {
+const SPREADSHEET_ID = "PASTE_SPREADSHEET_ID_DISINI";
+const SHEET_NAME = "Sheet1";
+const API_URL = "PASTE_URL_WEB_APP_DISINI";
+
+// =======================
+// GVIZ QUERY
+// =======================
+
+const query = encodeURIComponent("select * where A is not null");
+
+const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?sheet=${SHEET_NAME}&tq=${query}`;
+
+let globalData = [];
+
+fetch(url)
+.then(res => res.text())
+.then(text => {
+
+  const json = JSON.parse(
+    text.substring(47).slice(0, -2)
+  );
+
+  const rows = json.table.rows;
 
   let html = "";
+  let index = 0;
 
-  data.forEach(item => {
+  rows.forEach(r => {
+
+    const row = r.c;
+
+    const no = row[0]?.v || "";
+    const soal = row[1]?.v || "";
+
+    globalData.push({
+      soal: soal,
+      A: row[2]?.v || "",
+      B: row[3]?.v || "",
+      C: row[4]?.v || "",
+      D: row[5]?.v || "",
+      correct: row[6]?.v || ""
+    });
+
     html += `
       <tr>
-        <td><input type="checkbox" value="${item.index}"></td>
-        <td>${item.no}</td>
-        <td>${item.soal}</td>
+        <td><input type="checkbox" value="${index}"></td>
+        <td>${no}</td>
+        <td>${soal}</td>
       </tr>
     `;
+
+    index++;
   });
 
   document.getElementById("tbody").innerHTML = html;
@@ -121,7 +153,7 @@ function generate() {
   const namaFile = document.getElementById("namaFile").value.trim();
 
   if (!namaFile) {
-    alert("Silakan isi nama file terlebih dahulu.");
+    alert("Isi nama file dulu.");
     return;
   }
 
@@ -133,13 +165,16 @@ function generate() {
   }
 
   const selected = [];
-  checked.forEach(cb => selected.push(parseInt(cb.value)));
+
+  checked.forEach(cb => {
+    selected.push(globalData[parseInt(cb.value)]);
+  });
 
   document.getElementById("loading").innerHTML = "Sedang membuat file...";
 
-  fetch(API + "?action=generateAll"
-        + "&namaFile=" + encodeURIComponent(namaFile)
-        + "&selected=" + encodeURIComponent(JSON.stringify(selected)))
+  fetch(API_URL + "?action=generateAll"
+    + "&namaFile=" + encodeURIComponent(namaFile)
+    + "&selected=" + encodeURIComponent(JSON.stringify(selected)))
   .then(res => res.json())
   .then(data => {
 
@@ -159,7 +194,7 @@ function generate() {
   })
   .catch(err => {
     document.getElementById("loading").innerHTML = "";
-    alert("Error koneksi ke server.");
+    alert("Error koneksi.");
   });
 }
 
