@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Self-Building Skills - Dynamic Filters</title>
+    <style>
+        :root {
+            --primary-color: #0F5132; /* Emerald Green */
+            --secondary-color: #198754;
+            --accent-color: #D4AF37; /* Gold */
+            --bg-color: #F8F9FA;
+            --card-bg: #FFFFFF;
+            --text-main: #212529;
+            --text-muted: #6C757D;
+            --nav-height: 70px;
+            --header-height: 60px;
+            --border-radius: 12px;
+            --shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: #e9ecef;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 480px;
+            background-color: var(--bg-color);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        /* Header */
+        header {
+            height: var(--header-height);
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+
+        header h1 {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .header-icon {
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        /* Main Content */
+        main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            padding-bottom: calc(var(--nav-height) + 20px);
+            scroll-behavior: smooth;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            color: var(--text-main);
+            margin-bottom: 12px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .see-all {
+            font-size: 0.8rem;
+            color: var(--secondary-color);
+            text-decoration: none;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 12px;
+            margin-bottom: 12px;
+            box-shadow: var(--shadow);
+        }
+
+        /* --- TAB 1: BERITA --- */
+        .news-item {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .news-thumb {
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
+            object-fit: cover;
+            background-color: #ddd;
+        }
+
+        .news-content h3 {
+            font-size: 0.95rem;
+            margin-bottom: 4px;
+            line-height: 1.3;
+            color: var(--text-main);
+        }
+
+        .news-meta {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .source-badge {
+            background-color: #e2e6ea;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+
+        /* --- TAB 2: DASHBOARD --- */
+        .stats-overview {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+            margin-bottom: 16px;
+        }
+        
+        .stat-card-mini {
+            min-width: 140px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 12px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+
+        .stat-label { font-size: 0.8rem; opacity: 0.9; }
+        .stat-value { font-size: 1.2rem; font-weight: bold; margin: 4px 0; }
+        .stat-change { font-size: 0.75rem; display: flex; align-items: center; gap: 4px; }
+        .stat-change.up { color: #81ff9a; }
+        .stat-change.down { color: #ff8a80; }
+
+        .skill-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .skill-row:last-child { border-bottom: none; }
+        
+        .skill-info h4 { font-size: 0.95rem; color: var(--text-main); }
+        .skill-info p { font-size: 0.75rem; color: var(--text-muted); }
+        
+        .skill-value {
+            text-align: right;
+        }
+        .skill-price { font-weight: 600; color: var(--text-main); }
+        .skill-percent {
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        .text-up { color: #198754; }
+        .text-down { color: #dc3545; }
+
+        /* --- CARD STYLES (SHARED) --- */
+        
+        /* Grid 2 Kolom untuk Informasi */
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        /* Grid 3 Kolom untuk Profile */
+        .profile-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .tile-card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            text-align: center;
+            padding-bottom: 8px;
+            transition: transform 0.2s;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tile-card:active {
+            transform: scale(0.95);
+        }
+
+        .tile-img {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+            background-color: #eee;
+        }
+
+        .tile-name {
+            margin-top: 6px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-main);
+            padding: 0 4px;
+            line-height: 1.2;
+        }
+
+        .tile-pos {
+            font-size: 0.7rem;
+            color: var(--secondary-color);
+            font-weight: 600;
+            margin-bottom: 2px;
+            text-transform: uppercase;
+        }
+
+        .tile-club {
+            font-size: 0.6rem;
+            color: var(--text-muted);
+            background: #f1f3f5;
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 10px;
+        }
+
+        /* --- FILTER TABS STYLES --- */
+        .tags-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .tag {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            background: #e9ecef;
+            color: var(--text-muted);
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        
+        .tag.active {
+            background: var(--primary-color);
+            color: white;
+            box-shadow: 0 2px 4px rgba(15, 81, 50, 0.3);
+        }
+
+        /* Loader Styles */
+        .loader-container {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-muted);
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px auto;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: var(--nav-height);
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            border-top: 1px solid #eee;
+            z-index: 20;
+            padding-bottom: 10px; 
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            font-size: 0.7rem;
+            cursor: pointer;
+            width: 25%;
+            height: 100%;
+            transition: color 0.2s;
+        }
+
+        .nav-item svg {
+            width: 24px;
+            height: 24px;
+            margin-bottom: 4px;
+            fill: currentColor;
+        }
+
+        .nav-item.active {
+            color: var(--primary-color);
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: absolute;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            z-index: 100;
+            white-space: nowrap;
+        }
+        .toast.show { opacity: 1; }
+
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <!-- Header -->
+    <header>
+        <div class="header-icon">☰</div>
+        <h1>Self-Building Skills</h1>
+        <div class="header-icon" onclick="showToast('Pengaturan tidak tersedia')">⚙️</div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        
+        <!-- TAB 1: BERITA (DYNAMIC) -->
+        <section id="tab-berita" class="tab-content active">
+            <div class="section-title">
+                Berita Terkini
+                <a href="#" class="see-all" onclick="showToast('Memuat semua berita...')">Lihat Semua</a>
+            </div>
+
+            <div id="news-container">
+                <div class="loader-container">
+                    <div class="spinner"></div>
+                    <p>Memuat berita...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: DASHBOARD -->
+        <section id="tab-dashboard" class="tab-content">
+            <div class="section-title">Indeks Iman Hari Ini</div>
+            
+            <div class="stats-overview">
+                <div class="stat-card-mini">
+                    <div class="stat-label">Ibadah Wajib</div>
+                    <div class="stat-value">5/5</div>
+                    <div class="stat-change up">▲ Sempurna</div>
+                </div>
+                <div class="stat-card-mini" style="background: linear-gradient(135deg, #0d6efd, #0a58ca);">
+                    <div class="stat-label">Hafalan Quran</div>
+                    <div class="stat-value">2.5 Juz</div>
+                    <div class="stat-change up">▲ +0.1 Juz</div>
+                </div>
+                <div class="stat-card-mini" style="background: linear-gradient(135deg, #6610f2, #520dc2);">
+                    <div class="stat-label">Sedekah</div>
+                    <div class="stat-value">Rp 50k</div>
+                    <div class="stat-change down">▼ Limit</div>
+                </div>
+            </div>
+
+            <div class="section-title">Statistik Amalan (Real-time)</div>
+            <div class="card">
+                <div class="skill-row">
+                    <div class="skill-info">
+                        <h4>Shalat Dhuha</h4>
+                        <p>Konsistensi Pagi</p>
+                    </div>
+                    <div class="skill-value">
+                        <div class="skill-price">98%</div>
+                        <div class="skill-percent text-up">+2.4%</div>
+                    </div>
+                </div>
+                <div class="skill-row">
+                    <div class="skill-info">
+                        <h4>Tilawah Quran</h4>
+                        <p>Target 1 Halaman/Hari</p>
+                    </div>
+                    <div class="skill-value">
+                        <div class="skill-price">85%</div>
+                        <div class="skill-percent text-down">-1.2%</div>
+                    </div>
+                </div>
+                <div class="skill-row">
+                    <div class="skill-info">
+                        <h4>Dzikir Pagi/Petang</h4>
+                        <p>Ketenangan Hati</p>
+                    </div>
+                    <div class="skill-value">
+                        <div class="skill-price">100%</div>
+                        <div class="skill-percent text-up">+5.0%</div>
+                    </div>
+                </div>
+                <div class="skill-row">
+                    <div class="skill-info">
+                        <h4>Adab Makan</h4>
+                        <p>Sunnah Rasulullah</p>
+                    </div>
+                    <div class="skill-value">
+                        <div class="skill-price">75%</div>
+                        <div class="skill-percent text-up">+0.5%</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: INFORMASI (DYNAMIC DENGAN FILTER TABS) -->
+        <section id="tab-informasi" class="tab-content">
+            <div class="section-title">Informasi Tokoh</div>
+            
+            <!-- Container Filter Tabs (Generated via JS) -->
+            <div id="info-filters" class="tags-container">
+                <!-- Loading spinner for filters while data loads -->
+                <div class="spinner" style="width:15px; height:15px; border-width:2px; margin:0;"></div>
+            </div>
+            
+            <!-- Grid Container 2 Kolom -->
+            <div id="info-grid-container" class="info-grid">
+                <div class="loader-container" style="grid-column: 1 / -1;">
+                    <div class="spinner"></div>
+                    <p>Memuat data informasi...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: PROFILE (DYNAMIC) -->
+        <section id="tab-profile" class="tab-content">
+            <div class="section-title">Profil Saya</div>
+            
+            <!-- Grid Container 3 Kolom -->
+            <div id="profile-grid-container" class="profile-grid">
+                <div class="loader-container" style="grid-column: 1 / -1;">
+                    <div class="spinner"></div>
+                    <p>Memuat profil...</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <div class="nav-item active" onclick="switchTab('tab-berita', this)">
+            <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+            <span>Berita</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('tab-dashboard', this)">
+            <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+            <span>Dashboard</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('tab-informasi', this)">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+            <span>Informasi</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('tab-profile', this)">
+            <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+            <span>Profile</span>
+        </div>
+    </nav>
+
+    <!-- Toast Notification Element -->
+    <div id="toast" class="toast">Action</div>
+</div>
+
+<script>
+    // --- LOGIC TAB NAVIGASI UTAMA ---
+    function switchTab(tabId, navElement) {
+        const tabs = document.querySelectorAll('.tab-content');
+        tabs.forEach(tab => tab.classList.remove('active'));
+
+        document.getElementById(tabId).classList.add('active');
+
+        const navItems = document.querySelectorAll('.nav-item');
+        navItems.forEach(item => item.classList.remove('active'));
+        navElement.classList.add('active');
+
+        document.querySelector('main').scrollTop = 0;
+    }
+
+    function showToast(message) {
+        const toast = document.getElementById('toast');
+        toast.textContent = message;
+        toast.classList.add('show');
+        setTimeout(() => { toast.classList.remove('show'); }, 2000);
+    }
+
+    // --- KONFIGURASI SPREADSHEET UTAMA ---
+    const SPREADSHEET_ID = '19NSqIkZ1BU-bl1t3rVx_aA1yBb7AErk6wf-eF8rE9q0';
+
+    // --- LOGIC GOOGLE SHEETS (GVIZ) UNTUK BERITA ---
+    
+    const SHEET_GID_NEWS = '0';
+    const API_URL_NEWS = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?gid=${SHEET_GID_NEWS}&tq=select%20*%20where%20A%20is%20not%20null&tqx=out:json`;
+
+    async function fetchNewsData() {
+        const container = document.getElementById('news-container');
+        
+        try {
+            const response = await fetch(API_URL_NEWS);
+            const text = await response.text();
+            const jsonString = text.substring(47).slice(0, -2);
+            const data = JSON.parse(jsonString);
+            
+            container.innerHTML = '';
+            const rows = data.table.rows;
+            
+            if (rows.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding:20px;">Tidak ada berita ditemukan.</div>';
+                return;
+            }
+
+            rows.forEach((row, index) => {
+                const cells = row.c;
+                const title = cells[1] ? cells[1].v : 'Tanpa Judul';
+                let imageUrl = cells[2] ? cells[2].v : '';
+                const source = cells[3] ? cells[3].v : 'Sumber Umum';
+                const time = cells[4] ? cells[4].v : 'Baru saja';
+
+                if (!imageUrl || !imageUrl.startsWith('http')) {
+                    const seed = title.replace(/[^a-zA-Z0-9]/g, ''); 
+                    imageUrl = `https://picsum.photos/seed/${seed}/100/100`;
+                }
+
+                const newsItem = document.createElement('article');
+                newsItem.className = 'card news-item';
+                newsItem.onclick = () => showToast(`Membaca: ${title}`);
+                
+                newsItem.innerHTML = `
+                    <img src="${imageUrl}" alt="News Thumb" class="news-thumb">
+                    <div class="news-content">
+                        <h3>${title}</h3>
+                        <div class="news-meta">
+                            <span class="source-badge">${source}</span>
+                            <span>• ${time}</span>
+                        </div>
+                    </div>
+                `;
+                
+                container.appendChild(newsItem);
+            });
+
+        } catch (error) {
+            console.error('Gagal mengambil data berita:', error);
+            container.innerHTML = '<div style="text-align:center; padding:20px; color:red;">Gagal memuat berita.</div>';
+        }
+    }
+
+    // --- LOGIC GOOGLE SHEETS (GVIZ) UNTUK INFORMASI (FILTER DINAMIS) ---
+    
+    // Variabel Global untuk menyimpan data agar bisa difilter
+    let allInformasiData = [];
+    const SHEET_GID_INFO = '1429678630';
+    
+    // Query: SELECT A, B, C, D, E, F WHERE A IS NOT NULL
+    const API_URL_INFO = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?gid=${SHEET_GID_INFO}&tq=SELECT%20A%2C%20B%2C%20C%2C%20D%2C%20E%2C%20F%20WHERE%20A%20IS%20NOT%20NULL&tqx=out:json`;
+
+    async function fetchInformasiData() {
+        const container = document.getElementById('info-grid-container');
+        const filterContainer = document.getElementById('info-filters');
+        
+        try {
+            const response = await fetch(API_URL_INFO);
+            const text = await response.text();
+            const jsonString = text.substring(47).slice(0, -2);
+            const data = JSON.parse(jsonString);
+            
+            allInformasiData = []; // Reset data
+            const rows = data.table.rows;
+            
+            if (rows.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding:20px; grid-column: 1/-1;">Tidak ada data ditemukan.</div>';
+                filterContainer.innerHTML = '';
+                return;
+            }
+
+            // 1. Parsing Data ke Array Object
+            rows.forEach((row) => {
+                const cells = row.c;
+                // Mapping: A(0)=ID, B(1)=nama, C(2)=gambar_url, D(3)=posisi, E(4)=asal_sekolah, F(5)=kategory
+                const id = cells[0] ? cells[0].v : '';
+                const nama = cells[1] ? cells[1].v : 'Tanpa Nama';
+                let imageUrl = cells[2] ? cells[2].v : '';
+                const posisi = cells[3] ? cells[3].v : '';
+                const asal_sekolah = cells[4] ? cells[4].v : '';
+                const kategory = cells[5] ? cells[5].v : 'Umum'; // Default jika kosong
+
+                if (!imageUrl || !imageUrl.startsWith('http')) {
+                    const seed = nama.replace(/[^a-zA-Z0-9]/g, ''); 
+                    imageUrl = `https://picsum.photos/seed/${seed}/200/150`;
+                }
+
+                allInformasiData.push({
+                    id, nama, imageUrl, posisi, asal_sekolah, kategory
+                });
+            });
+
+            // 2. Generate Filter Tabs berdasarkan Kategori unik
+            generateInfoFilters();
+
+            // 3. Render Grid Awal (Tampilkan Semua)
+            renderInfoGrid(allInformasiData);
+
+        } catch (error) {
+            console.error('Gagal mengambil data informasi:', error);
+            container.innerHTML = '<div style="text-align:center; padding:20px; color:red; grid-column: 1/-1;">Gagal memuat informasi.</div>';
+            filterContainer.innerHTML = '';
+        }
+    }
+
+    function generateInfoFilters() {
+        const filterContainer = document.getElementById('info-filters');
+        
+        // Ambil list kategori unik dari data
+        const categories = [...new Set(allInformasiData.map(item => item.kategory))];
+        // Urutkan kategori
+        categories.sort();
+
+        let html = `<button class="tag active" onclick="filterInformasi('Semua', this)">Semua</button>`;
+
+        categories.forEach(cat => {
+            html += `<button class="tag" onclick="filterInformasi('${cat}', this)">${cat}</button>`;
+        });
+
+        filterContainer.innerHTML = html;
+    }
+
+    // Fungsi Filter yang dipanggil saat Tab diklik
+    function filterInformasi(filterValue, btnElement) {
+        // Update tampilan tombol aktif
+        const tags = document.querySelectorAll('#info-filters .tag');
+        tags.forEach(tag => tag.classList.remove('active'));
+        btnElement.classList.add('active');
+
+        // Filter data
+        let filteredData;
+        if (filterValue === 'Semua') {
+            filteredData = allInformasiData;
+        } else {
+            filteredData = allInformasiData.filter(item => item.kategory === filterValue);
+        }
+
+        renderInfoGrid(filteredData);
+    }
+
+    function renderInfoGrid(dataArray) {
+        const container = document.getElementById('info-grid-container');
+        container.innerHTML = ''; // Clear existing
+
+        if (dataArray.length === 0) {
+            container.innerHTML = '<div style="text-align:center; padding:20px; grid-column: 1/-1; color:var(--text-muted)">Tidak ada data pada kategori ini.</div>';
+            return;
+        }
+
+        dataArray.forEach((item) => {
+            const tileCard = document.createElement('div');
+            tileCard.className = 'tile-card';
+            tileCard.onclick = () => showToast(`Info: ${item.nama} (${item.kategory})`);
+            
+            tileCard.innerHTML = `
+                <img src="${item.imageUrl}" alt="Info" class="tile-img">
+                <div class="tile-name">${item.nama}</div>
+                <div class="tile-pos">${item.posisi}</div>
+                <div class="tile-club">${item.asal_sekolah}</div>
+            `;
+            
+            container.appendChild(tileCard);
+        });
+    }
+
+    // --- LOGIC GOOGLE SHEETS (GVIZ) UNTUK PROFILE ---
+    
+    const SHEET_GID_PROFILE = '598702728';
+    const API_URL_PROFILE = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?gid=${SHEET_GID_PROFILE}&tq=SELECT%20A%2C%20B%2C%20C%2C%20D%2C%20E%20WHERE%20A%20IS%20NOT%20NULL&tqx=out:json`;
+
+    async function fetchProfileData() {
+        const container = document.getElementById('profile-grid-container');
+        
+        try {
+            const response = await fetch(API_URL_PROFILE);
+            const text = await response.text();
+            const jsonString = text.substring(47).slice(0, -2);
+            const data = JSON.parse(jsonString);
+            
+            container.innerHTML = '';
+            const rows = data.table.rows;
+            
+            if (rows.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding:20px; grid-column: 1/-1;">Tidak ada profil ditemukan.</div>';
+                return;
+            }
+
+            rows.forEach((row) => {
+                const cells = row.c;
+
+                // Mapping: A(0)=ID, B(1)=judul_menu, C(2)=sub_judul, D(3)=detail_teks, E(4)=gambar_url
+                const id = cells[0] ? cells[0].v : '';
+                const judul_menu = cells[1] ? cells[1].v : 'Tanpa Nama';         
+                const sub_judul = cells[2] ? cells[2].v : '';                     
+                const detail_teks = cells[3] ? cells[3].v : '';                   
+                let imageUrl = cells[4] ? cells[4].v : '';                        
+
+                if (!imageUrl || !imageUrl.startsWith('http')) {
+                    const seed = judul_menu.replace(/[^a-zA-Z0-9]/g, ''); 
+                    imageUrl = `https://picsum.photos/seed/${seed}/200/150`;
+                }
+
+                const tileCard = document.createElement('div');
+                tileCard.className = 'tile-card';
+                tileCard.onclick = () => showToast(`Profil: ${judul_menu}`);
+                
+                tileCard.innerHTML = `
+                    <img src="${imageUrl}" alt="Profile" class="tile-img">
+                    <div class="tile-name">${judul_menu}</div>
+                    <div class="tile-pos">${sub_judul}</div>
+                    <div class="tile-club">${detail_teks}</div>
+                `;
+                
+                container.appendChild(tileCard);
+            });
+
+        } catch (error) {
+            console.error('Gagal mengambil data profil:', error);
+            container.innerHTML = '<div style="text-align:center; padding:20px; color:red; grid-column: 1/-1;">Gagal memuat profil.</div>';
+        }
+    }
+
+    // Load semua data saat halaman dimuat
+    document.addEventListener('DOMContentLoaded', () => {
+        fetchNewsData();
+        fetchInformasiData();
+        fetchProfileData();
+    });
+
+</script>
+
+</body>
+</html>
